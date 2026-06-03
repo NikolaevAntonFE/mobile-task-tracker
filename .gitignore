@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Local task data and logs
+data/
+
+# Android build outputs and local machine config
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+
+# Generated Android artifacts
+*.apk
+*.aab
+
+# Downloaded SDK tools
+commandlinetools-*.zip
+cmdline-tools-extract/
+
+# Environment/secrets
+.env
+*.env
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

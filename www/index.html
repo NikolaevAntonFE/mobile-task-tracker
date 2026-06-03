@@ -1,0 +1,1683 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101316" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f4f7f9" media="(prefers-color-scheme: light)">
+  <title>Задачи</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <script src="./capacitor.js"></script>
+  <style>
+    :root {
+      color-scheme: dark light;
+      --bg: #101316;
+      --panel: #171c20;
+      --panel-2: #20262b;
+      --panel-3: #263039;
+      --line: #303941;
+      --line-soft: rgba(48, 57, 65, .72);
+      --text: #edf2f5;
+      --muted: #9aa6af;
+      --accent: #6cb6ff;
+      --accent-soft: rgba(108, 182, 255, .16);
+      --accent-strong: #92c9ff;
+      --green: #7ddc8a;
+      --yellow: #f4c95d;
+      --red: #ff7b72;
+      --danger-soft: rgba(255, 123, 114, .14);
+      --radius: 8px;
+      --control-h: 44px;
+      --shadow: 0 18px 44px rgba(0, 0, 0, .28);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f4f7f9;
+        --panel: #ffffff;
+        --panel-2: #edf2f5;
+        --panel-3: #e1ebf2;
+        --line: #ccd7df;
+        --line-soft: rgba(204, 215, 223, .8);
+        --text: #151b20;
+        --muted: #5f6d78;
+        --accent: #1f7fd1;
+        --accent-soft: rgba(31, 127, 209, .12);
+        --accent-strong: #0b67b8;
+        --shadow: 0 16px 38px rgba(29, 47, 61, .14);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    .app {
+      width: min(100vw, 760px);
+      max-width: 100vw;
+      min-height: 100vh;
+      margin: 0 auto;
+      overflow: hidden;
+      padding: max(14px, env(safe-area-inset-top)) clamp(12px, 4vw, 24px) max(18px, env(safe-area-inset-bottom));
+    }
+
+    header, .quick, .toolbar, .search, .segments, .stats, .list, .task, .empty {
+      max-width: 100%;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      margin: -14px 0 14px;
+      padding: max(16px, env(safe-area-inset-top)) 0 14px;
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
+      border-bottom: 1px solid var(--line-soft);
+      backdrop-filter: blur(10px);
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .title-row {
+      min-width: 0;
+    }
+
+    .top-actions {
+      display: flex;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .quick {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .quick input, .search input, textarea, select, .field-input {
+      width: 100%;
+      min-height: var(--control-h);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--text);
+      padding: 10px 12px;
+      outline: none;
+    }
+
+    .quick input:focus, .search input:focus, textarea:focus, select:focus, .field-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .icon-btn, .primary, .ghost {
+      min-height: var(--control-h);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--text);
+      background: var(--panel-2);
+      padding: 0 14px;
+      cursor: pointer;
+    }
+
+    .top-actions .icon-btn {
+      width: 44px;
+      padding: 0;
+    }
+
+    .top-actions svg {
+      width: 19px;
+      height: 19px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .bulk-delete {
+      background: var(--danger-soft);
+      border-color: rgba(255, 123, 114, .5);
+      color: var(--red);
+      display: none;
+    }
+
+    .bulk-delete.active {
+      display: grid;
+      place-items: center;
+    }
+
+    .primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #071018;
+      font-weight: 700;
+    }
+
+    .ghost {
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin: 0 0 12px;
+      min-width: 0;
+    }
+
+    .search {
+      display: none;
+      min-width: 0;
+    }
+
+    .search.active {
+      display: block;
+    }
+
+    .search-toggle {
+      width: 44px;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+
+    .segments {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      min-width: 0;
+    }
+
+    .segments button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      min-width: 0;
+      overflow: hidden;
+      padding: 0 4px;
+      text-align: center;
+    }
+
+    .segments button b {
+      display: block;
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.1;
+    }
+
+    .segments button span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .segments button.active {
+      background: var(--panel-2);
+      color: var(--text);
+      box-shadow: inset 0 0 0 1px var(--line-soft);
+    }
+
+    .list {
+      display: grid;
+      gap: 8px;
+      padding-bottom: 96px;
+      min-width: 0;
+    }
+
+    .task {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 12px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    .task.selecting {
+      cursor: pointer;
+    }
+
+    .task.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow);
+    }
+
+    .check {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--line);
+      background: transparent;
+      color: var(--bg);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .task.done .check {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .task.done .title {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .title {
+      font-size: 15px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      margin-bottom: 7px;
+    }
+
+    .task-main {
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.2;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pill.high { color: var(--red); border-color: rgba(255, 123, 114, .45); }
+    .pill.medium { color: var(--yellow); border-color: rgba(244, 201, 93, .45); }
+    .pill.low { color: var(--green); border-color: rgba(125, 220, 138, .45); }
+    .pill.overdue { color: var(--red); }
+    .pill.today { color: var(--accent); }
+
+    .menu {
+      display: grid;
+      gap: 6px;
+    }
+
+    .mini {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 42px 18px;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+    }
+
+    dialog {
+      width: min(560px, calc(100% - 24px));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--text);
+      padding: 0;
+      box-shadow: var(--shadow);
+    }
+
+    dialog::backdrop {
+      background: rgba(0, 0, 0, .62);
+    }
+
+    .modal {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      max-height: calc(100vh - 28px);
+      overflow-y: auto;
+    }
+
+    .modal h2 {
+      margin: 0 0 4px;
+      font-size: 18px;
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    .field-block {
+      display: grid;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .field-label {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1;
+      padding-left: 2px;
+    }
+
+    .field-input {
+      appearance: none;
+      -webkit-appearance: none;
+      font-size: 16px;
+    }
+
+    .field-input::placeholder {
+      color: var(--muted);
+      opacity: 1;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .choice-grid.priority {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .choice-btn {
+      min-height: var(--control-h);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0 10px;
+    }
+
+    .choice-btn.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--text);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .date-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .time-panel {
+      border-top: 1px solid var(--line-soft);
+      border-bottom: 1px solid var(--line-soft);
+      display: grid;
+      gap: 12px;
+      padding: 12px 0;
+    }
+
+    .time-panel-head,
+    .all-day-row,
+    .calendar-nav,
+    .time-summary {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+    }
+
+    .time-panel-head {
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .time-icon {
+      color: var(--muted);
+      display: grid;
+      place-items: center;
+      width: 26px;
+    }
+
+    .all-day-row {
+      color: var(--text);
+      justify-content: space-between;
+      padding-left: 36px;
+    }
+
+    .switch {
+      position: relative;
+      width: 46px;
+      height: 28px;
+    }
+
+    .switch input {
+      opacity: 0;
+      position: absolute;
+    }
+
+    .switch span {
+      background: var(--panel-3);
+      border-radius: 999px;
+      inset: 0;
+      position: absolute;
+      transition: background .18s ease;
+    }
+
+    .switch span::after {
+      background: var(--text);
+      border-radius: 50%;
+      content: "";
+      height: 22px;
+      left: 3px;
+      position: absolute;
+      top: 3px;
+      transition: transform .18s ease;
+      width: 22px;
+    }
+
+    .switch input:checked + span {
+      background: var(--accent);
+    }
+
+    .switch input:checked + span::after {
+      transform: translateX(18px);
+    }
+
+    .time-summary {
+      justify-content: center;
+    }
+
+    .date-chip,
+    .preset-chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      cursor: pointer;
+      min-height: 40px;
+      padding: 0 24px;
+      font-weight: 700;
+    }
+
+    .time-separator {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .time-input {
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      border: 0;
+      color: var(--accent-strong);
+      font-size: 18px;
+      min-height: 40px;
+      outline: none;
+      text-align: center;
+      width: 88px;
+    }
+
+    .time-input::placeholder {
+      color: var(--muted);
+    }
+
+    .time-input:disabled {
+      color: var(--muted);
+      opacity: .55;
+    }
+
+    .calendar-nav {
+      justify-content: space-between;
+      padding: 0 4px;
+    }
+
+    .month-label {
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .calendar-arrow {
+      background: transparent;
+      border: 0;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 28px;
+      height: 38px;
+      width: 38px;
+    }
+
+    .weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      text-align: center;
+    }
+
+    .weekdays {
+      color: var(--muted);
+      font-size: 12px;
+      padding: 0 4px;
+    }
+
+    .weekdays span {
+      padding: 6px 0;
+    }
+
+    .weekday-sunday,
+    .calendar-day.sunday {
+      color: var(--red);
+    }
+
+    .calendar-grid {
+      row-gap: 4px;
+    }
+
+    .calendar-day {
+      background: transparent;
+      border: 0;
+      color: var(--text);
+      cursor: pointer;
+      height: 36px;
+      margin: 0 auto;
+      padding: 0;
+      width: 36px;
+      border-radius: 50%;
+    }
+
+    .calendar-day.muted {
+      color: rgba(155, 167, 176, .38);
+    }
+
+    .calendar-day.selected {
+      background: var(--accent);
+      color: #071018;
+      font-weight: 700;
+    }
+
+    .preset-row {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding: 4px 0 0;
+    }
+
+    .preset-chip {
+      background: transparent;
+      color: var(--text);
+      font-weight: 400;
+      min-height: 36px;
+      padding: 0 10px;
+      white-space: nowrap;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .danger {
+      color: var(--red);
+      border-color: rgba(255, 123, 114, .45);
+    }
+
+    .settings-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: var(--panel-2);
+    }
+
+    .settings-row span {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .settings-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .status-text {
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .hidden-file {
+      display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .quick, .toolbar, .search, .segments, .stats, .list, .empty {
+        width: 100%;
+      }
+
+      .top {
+        width: 100%;
+      }
+
+      dialog {
+        width: calc(100% - 24px);
+      }
+
+      .choice-grid.priority {
+        grid-template-columns: 1fr;
+      }
+
+      .preset-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-height: 760px) {
+      textarea {
+        min-height: 62px;
+      }
+
+      .modal {
+        gap: 8px;
+      }
+
+      .time-panel {
+        gap: 8px;
+        padding: 10px 0;
+      }
+
+      .calendar-day {
+        height: 32px;
+        width: 32px;
+      }
+
+      .weekdays span {
+        padding: 4px 0;
+      }
+
+      .preset-chip {
+        min-height: 34px;
+      }
+    }
+
+    @media (min-width: 680px) {
+      .app {
+        width: min(100vw, 920px);
+      }
+
+      .list {
+        gap: 10px;
+      }
+
+      dialog {
+        width: min(560px, calc(100% - 48px));
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="top">
+        <div class="title-row">
+          <h1>Задачи</h1>
+          <div class="count" id="countText">0 открытых</div>
+        </div>
+        <div class="top-actions">
+          <button class="icon-btn bulk-delete" id="bulkDeleteBtn" type="button" aria-label="Удалить выбранные">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 6h18"></path>
+              <path d="M8 6V4h8v2"></path>
+              <path d="M6 6l1 18h10l1-18"></path>
+              <path d="M10 11v6"></path>
+              <path d="M14 11v6"></path>
+            </svg>
+          </button>
+          <button class="search-toggle" id="searchToggle" type="button" aria-label="Поиск">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="M16.5 16.5L21 21"></path>
+            </svg>
+          </button>
+          <button class="icon-btn" id="settingsBtn" type="button" aria-label="Настройки">⚙</button>
+        </div>
+      </div>
+
+      <form class="quick" id="quickForm">
+        <input id="quickInput" autocomplete="off" placeholder="Быстро добавить задачу">
+        <button class="primary" type="submit" aria-label="Добавить">+</button>
+      </form>
+    </header>
+
+    <section class="toolbar">
+      <div class="search" id="searchWrap">
+        <input id="searchInput" autocomplete="off" placeholder="Поиск">
+      </div>
+      <div class="segments" role="tablist">
+        <button data-filter="open" class="active" type="button">
+          <b id="filterOpenCount">0</b>
+          <span>Открытые</span>
+        </button>
+        <button data-filter="overdue" type="button">
+          <b id="filterOverdueCount">0</b>
+          <span>Просрочка</span>
+        </button>
+        <button data-filter="done" type="button">
+          <b id="filterDoneCount">0</b>
+          <span>Закрытые</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="list" id="taskList"></section>
+  </main>
+
+  <dialog id="taskDialog">
+    <form class="modal" id="taskForm" method="dialog">
+      <h2 id="dialogTitle">Новая задача</h2>
+      <label class="field-block">
+        <span class="field-label">Описание</span>
+        <textarea id="taskText" placeholder="Что нужно сделать?"></textarea>
+      </label>
+      <div class="form-grid">
+        <div class="field-block">
+          <span class="field-label">Тип</span>
+          <input id="taskType" type="hidden" value="task">
+          <div class="choice-grid" data-choice-field="type">
+            <button class="choice-btn" data-choice-value="task" type="button">Задача</button>
+            <button class="choice-btn" data-choice-value="reminder" type="button">Напоминание</button>
+          </div>
+        </div>
+        <div class="field-block">
+          <span class="field-label">Важность</span>
+          <input id="taskPriority" type="hidden" value="medium">
+          <div class="choice-grid priority" data-choice-field="priority">
+            <button class="choice-btn" data-choice-value="medium" type="button">Средне</button>
+            <button class="choice-btn" data-choice-value="high" type="button">Важно</button>
+            <button class="choice-btn" data-choice-value="low" type="button">Низко</button>
+          </div>
+        </div>
+      </div>
+      <div class="time-panel">
+        <div class="time-panel-head">
+          <span class="time-icon">◷</span>
+          <span>Время</span>
+        </div>
+        <label class="all-day-row">
+          <span>Весь день</span>
+          <span class="switch">
+            <input id="allDayToggle" type="checkbox">
+            <span></span>
+          </span>
+        </label>
+        <div class="time-summary">
+          <button class="date-chip" id="todayBtn" type="button">Сегодня</button>
+          <span class="time-separator">|</span>
+          <input class="time-input" id="taskTime" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="--:--" aria-label="Время">
+        </div>
+        <div class="calendar-nav">
+          <button class="calendar-arrow" id="prevMonthBtn" type="button" aria-label="Предыдущий месяц">‹</button>
+          <div class="month-label" id="monthLabel">июнь 2026 г.</div>
+          <button class="calendar-arrow" id="nextMonthBtn" type="button" aria-label="Следующий месяц">›</button>
+        </div>
+        <div class="weekdays" aria-hidden="true">
+          <span>ПН</span><span>ВТ</span><span>СР</span><span>ЧТ</span><span>ПТ</span><span>СБ</span><span class="weekday-sunday">ВС</span>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <input id="taskDue" type="hidden">
+        <div class="preset-row">
+          <button class="preset-chip" data-date-preset="1" type="button">Завтра</button>
+          <button class="preset-chip" data-date-preset="3" type="button">Через 3 дня</button>
+          <button class="preset-chip" data-date-preset="7" type="button">Через 1 неделю</button>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="ghost" value="cancel" type="button" id="cancelBtn">Отмена</button>
+        <button class="primary" value="default" type="submit">Сохранить</button>
+      </div>
+      <button class="ghost danger" type="button" id="deleteBtn">Удалить</button>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog">
+    <form class="modal" method="dialog">
+      <h2>Настройки</h2>
+      <div class="settings-grid" aria-label="Состояние">
+        <div class="settings-row"><b>Telegram</b><span id="telegramStatus">проверка</span></div>
+        <div class="settings-row"><b>Задачи на сервере</b><span id="serverTaskCount">проверка</span></div>
+        <div class="settings-row"><b>Часовой пояс</b><span id="timezoneStatus">проверка</span></div>
+      </div>
+      <div class="settings-actions">
+        <button class="primary" type="button" id="testTelegramBtn">Тест Telegram</button>
+        <button class="ghost" type="button" id="exportBtn">Экспорт задач</button>
+        <button class="ghost" type="button" id="importBtn">Импорт задач</button>
+        <input class="hidden-file" id="importFile" type="file" accept="application/json,.json">
+      </div>
+      <div class="status-text" id="settingsMessage"></div>
+      <button class="ghost" value="cancel" type="button" id="settingsCloseBtn">Закрыть</button>
+    </form>
+  </dialog>
+
+  <script>
+    const storeKey = "anton.mobile.tasks.v1";
+    const nativeApp = Boolean(window.Capacitor?.isNativePlatform?.());
+    const serverBase = nativeApp ? "http://192.168.100.25:8787" : "";
+    const apiUrl = serverBase ? `${serverBase}/api/tasks` : "./api/tasks";
+    const statusUrl = serverBase ? `${serverBase}/api/status` : "./api/status";
+    const testReminderUrl = serverBase ? `${serverBase}/api/test-reminder` : "./api/test-reminder";
+    const filters = document.querySelectorAll("[data-filter]");
+    const list = document.querySelector("#taskList");
+    const dialog = document.querySelector("#taskDialog");
+    const settingsDialog = document.querySelector("#settingsDialog");
+    const form = document.querySelector("#taskForm");
+    const quickForm = document.querySelector("#quickForm");
+    const quickInput = document.querySelector("#quickInput");
+    const searchWrap = document.querySelector("#searchWrap");
+    const searchToggle = document.querySelector("#searchToggle");
+    const searchInput = document.querySelector("#searchInput");
+    const bulkDeleteBtn = document.querySelector("#bulkDeleteBtn");
+    const settingsMessage = document.querySelector("#settingsMessage");
+    const calendarGrid = document.querySelector("#calendarGrid");
+    const monthLabel = document.querySelector("#monthLabel");
+    const allDayToggle = document.querySelector("#allDayToggle");
+    const fields = {
+      text: document.querySelector("#taskText"),
+      type: document.querySelector("#taskType"),
+      priority: document.querySelector("#taskPriority"),
+      due: document.querySelector("#taskDue"),
+      time: document.querySelector("#taskTime"),
+    };
+    let tasks = [];
+    let currentFilter = "open";
+    let editingId = null;
+    const selectedTaskIds = new Set();
+    let selectionMode = false;
+    let longPressTimer = null;
+    let suppressNextTaskClick = false;
+    let calendarViewDate = new Date();
+
+    function loadLocal() {
+      try {
+        return JSON.parse(localStorage.getItem(storeKey) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    async function load() {
+      try {
+        const res = await fetch(apiUrl, { cache: "no-store" });
+        if (!res.ok) throw new Error("load failed");
+        tasks = await res.json();
+        tasks = tasks.map(normalizeTaskTime);
+        const local = loadLocal();
+        if (!tasks.length && local.length) {
+          tasks = local.map(normalizeTaskTime);
+          await persistAll();
+        }
+      } catch {
+        tasks = loadLocal().map(normalizeTaskTime);
+      }
+      render();
+      await syncLocalNotifications();
+    }
+
+    function saveLocal() {
+      localStorage.setItem(storeKey, JSON.stringify(tasks));
+    }
+
+    async function persistAll() {
+      saveLocal();
+      try {
+        await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(tasks)
+        });
+      } catch {
+        // Offline/local fallback is still kept in localStorage.
+      }
+    }
+
+    async function createTask(task) {
+      saveLocal();
+      try {
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(task)
+        });
+        if (!res.ok) throw new Error("create failed");
+      } catch {
+        // Offline/local fallback is still kept in localStorage.
+      }
+    }
+
+    async function updateTask(task) {
+      saveLocal();
+      try {
+        const res = await fetch(`${apiUrl}/${encodeURIComponent(task.id)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(task)
+        });
+        if (!res.ok) throw new Error("update failed");
+      } catch {
+        // Offline/local fallback is still kept in localStorage.
+      }
+    }
+
+    async function deleteTaskById(id) {
+      saveLocal();
+      try {
+        const res = await fetch(`${apiUrl}/${encodeURIComponent(id)}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("delete failed");
+      } catch {
+        // Offline/local fallback is still kept in localStorage.
+      }
+    }
+
+    function localIsoDate(date = new Date()) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function dateFromIso(value) {
+      const parts = (value || "").split("-").map(Number);
+      if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function addDays(date, days) {
+      const next = new Date(date);
+      next.setDate(next.getDate() + days);
+      return next;
+    }
+
+    function dueAtUtc(due, time) {
+      if (!due || !time) return "";
+      const date = new Date(`${due}T${time}:00`);
+      return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+    }
+
+    function localNotificationsPlugin() {
+      return window.Capacitor?.Plugins?.LocalNotifications || window.CapacitorCustomPlatform?.plugins?.LocalNotifications || null;
+    }
+
+    function notificationId(taskId) {
+      let hash = 0;
+      for (let i = 0; i < String(taskId).length; i += 1) {
+        hash = ((hash << 5) - hash + String(taskId).charCodeAt(i)) | 0;
+      }
+      return Math.abs(hash) % 2147483647 || 1;
+    }
+
+    async function ensureNotificationPermission(plugin) {
+      if (!plugin?.requestPermissions) return false;
+      const current = plugin.checkPermissions ? await plugin.checkPermissions() : {};
+      if (current.display === "granted") return true;
+      const requested = await plugin.requestPermissions();
+      return requested.display === "granted";
+    }
+
+    async function cancelLocalNotification(task) {
+      const plugin = localNotificationsPlugin();
+      if (!plugin?.cancel || !task?.id) return;
+      try {
+        await plugin.cancel({ notifications: [{ id: notificationId(task.id) }] });
+      } catch {
+        // Native notifications are best-effort; task data is still saved.
+      }
+    }
+
+    async function scheduleLocalNotification(task) {
+      const plugin = localNotificationsPlugin();
+      if (!plugin?.schedule || !task?.id) return;
+      await cancelLocalNotification(task);
+      if (task.done || !task.due || !task.time) return;
+      const when = new Date(`${task.due}T${task.time}:00`);
+      if (Number.isNaN(when.getTime()) || when <= new Date()) return;
+      try {
+        if (!(await ensureNotificationPermission(plugin))) return;
+        await plugin.schedule({
+          notifications: [{
+            id: notificationId(task.id),
+            title: typeLabel(task.type) === "напоминание" ? "Напоминание" : "Задача",
+            body: task.text || "Напоминание",
+            schedule: { at: when }
+          }]
+        });
+      } catch {
+        // The app remains usable even if Android blocks exact alarms/notifications.
+      }
+    }
+
+    async function syncLocalNotifications() {
+      const plugin = localNotificationsPlugin();
+      if (!plugin?.schedule) return;
+      for (const task of tasks) {
+        await scheduleLocalNotification(task);
+      }
+    }
+
+    function browserTimeZone() {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "local";
+    }
+
+    function normalizeTaskTime(task) {
+      const due = task.due || "";
+      const time = task.time || "";
+      return {
+        ...task,
+        project: normalizeProject(task.project),
+        time,
+        notifiedAt: task.notifiedAt || "",
+        dueAtUtc: task.dueAtUtc || dueAtUtc(due, time),
+        sourceTimeZone: task.sourceTimeZone || browserTimeZone(),
+        sourceOffsetMinutes: Number.isFinite(task.sourceOffsetMinutes)
+          ? task.sourceOffsetMinutes
+          : -new Date().getTimezoneOffset()
+      };
+    }
+
+    function todayIso() {
+      return localIsoDate();
+    }
+
+    function makeTask(text) {
+      return {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        text: text.trim(),
+        type: "task",
+        priority: "medium",
+        project: "Напоминалка",
+        due: "",
+        time: "",
+        dueAtUtc: "",
+        sourceTimeZone: browserTimeZone(),
+        sourceOffsetMinutes: -new Date().getTimezoneOffset(),
+        notifiedAt: "",
+        done: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    function typeLabel(type) {
+      return {
+        task: "задача",
+        reminder: "напоминание",
+        waiting: "жду",
+        decision: "решение"
+      }[type] || type;
+    }
+
+    function priorityLabel(priority) {
+      return {
+        high: "важно",
+        medium: "средне",
+        low: "низко"
+      }[priority] || priority;
+    }
+
+    function dueLabel(due, time) {
+      if (!due) return "";
+      const parts = due.split("-");
+      const label = parts.length === 3 ? `${parts[2]}.${parts[1]}` : due;
+      return time ? `${label} ${time}` : label;
+    }
+
+    function shortDateText(value) {
+      const today = localIsoDate();
+      if (value === today) return "Сегодня";
+      if (value === localIsoDate(addDays(new Date(), 1))) return "Завтра";
+      const parts = (value || "").split("-");
+      return parts.length === 3 ? `${parts[2]}.${parts[1]}` : "Дата";
+    }
+
+    function isoToDisplayDate(value) {
+      const parts = (value || "").split("-");
+      return parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : "";
+    }
+
+    function displayDateToIso(value) {
+      const match = (value || "").trim().match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+      if (!match) return "";
+      return `${match[3]}-${match[2]}-${match[1]}`;
+    }
+
+    function formatDateInput(value) {
+      const digits = value.replace(/\D/g, "").slice(0, 8);
+      const day = digits.slice(0, 2);
+      const month = digits.slice(2, 4);
+      const year = digits.slice(4, 8);
+      return [day, month, year].filter(Boolean).join(".");
+    }
+
+    function formatTimeInput(value) {
+      const digits = value.replace(/\D/g, "").slice(0, 4);
+      const hours = digits.slice(0, 2);
+      const mins = digits.slice(2, 4);
+      return mins ? `${hours}:${mins}` : hours;
+    }
+
+    function defaultReminderTime() {
+      const date = new Date();
+      date.setMinutes(date.getMinutes() + 30);
+      const minutes = date.getMinutes();
+      date.setMinutes(minutes <= 30 ? 30 : 0, 0, 0);
+      if (minutes > 30) date.setHours(date.getHours() + 1);
+      return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+    }
+
+    function normalizedTime(value) {
+      return /^\d{2}:\d{2}$/.test(value || "") ? value : "";
+    }
+
+    function renderCalendar() {
+      const selectedIso = fields.due.value || localIsoDate();
+      const selectedDate = dateFromIso(selectedIso) || new Date();
+      const view = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth(), 1);
+      const monthNames = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
+      monthLabel.textContent = `${monthNames[view.getMonth()]} ${view.getFullYear()} г.`;
+      document.querySelector("#todayBtn").textContent = shortDateText(selectedIso);
+      calendarGrid.innerHTML = "";
+      const mondayOffset = (view.getDay() + 6) % 7;
+      const firstCell = addDays(view, -mondayOffset);
+      for (let i = 0; i < 42; i += 1) {
+        const date = addDays(firstCell, i);
+        const iso = localIsoDate(date);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "calendar-day";
+        if (date.getMonth() !== view.getMonth()) button.classList.add("muted");
+        if (date.getDay() === 0) button.classList.add("sunday");
+        if (iso === selectedIso) button.classList.add("selected");
+        button.textContent = String(date.getDate());
+        button.addEventListener("click", () => setSelectedDate(date));
+        calendarGrid.appendChild(button);
+      }
+    }
+
+    function setSelectedDate(date) {
+      fields.due.value = localIsoDate(date);
+      calendarViewDate = new Date(date.getFullYear(), date.getMonth(), 1);
+      renderCalendar();
+    }
+
+    function syncChoiceField(name, value) {
+      const input = name === "type" ? fields.type : fields.priority;
+      input.value = value;
+      document.querySelectorAll(`[data-choice-field="${name}"] .choice-btn`).forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.choiceValue === value);
+      });
+    }
+
+    function normalizeProject(project) {
+      if (project === "Работа" || project === "Жизнь" || project === "Напоминалка") {
+        return project;
+      }
+      return "Напоминалка";
+    }
+
+    function dueClass(due) {
+      if (!due) return "";
+      const today = todayIso();
+      if (due < today) return "overdue";
+      if (due === today) return "today";
+      return "";
+    }
+
+    function visibleTasks() {
+      const q = searchInput.value.trim().toLowerCase();
+      return tasks
+        .filter(task => {
+          if (currentFilter === "open") return !task.done;
+          if (currentFilter === "overdue") return !task.done && task.due && task.due < todayIso();
+          if (currentFilter === "done") return task.done;
+          return true;
+        })
+        .filter(task => !q || [task.text, task.project, task.type].join(" ").toLowerCase().includes(q))
+        .sort((a, b) => {
+          if (a.done !== b.done) return a.done ? 1 : -1;
+          const ad = a.dueAtUtc || `${a.due || "9999"} ${a.time || "23:59"}`;
+          const bd = b.dueAtUtc || `${b.due || "9999"} ${b.time || "23:59"}`;
+          if (ad !== bd) return ad.localeCompare(bd);
+          const order = { high: 0, medium: 1, low: 2 };
+          return (order[a.priority] ?? 1) - (order[b.priority] ?? 1);
+        });
+    }
+
+    function renderStats() {
+      const open = tasks.filter(t => !t.done);
+      document.querySelector("#filterOpenCount").textContent = open.length;
+      document.querySelector("#filterOverdueCount").textContent = open.filter(t => t.due && t.due < todayIso()).length;
+      document.querySelector("#filterDoneCount").textContent = tasks.filter(t => t.done).length;
+      document.querySelector("#countText").textContent = `${open.length} открытых`;
+    }
+
+    function updateSelectionUi() {
+      const selectedCount = selectedTaskIds.size;
+      selectionMode = selectedCount > 0;
+      bulkDeleteBtn.classList.toggle("active", selectionMode);
+      bulkDeleteBtn.disabled = !selectionMode;
+      bulkDeleteBtn.title = selectionMode ? `Удалить выбранные: ${selectedCount}` : "Удалить выбранные";
+      if (selectionMode) {
+        document.querySelector("#countText").textContent = `${selectedCount} выбрано`;
+      }
+    }
+
+    function clearSelection() {
+      selectedTaskIds.clear();
+      selectionMode = false;
+      updateSelectionUi();
+    }
+
+    function toggleTaskSelection(id) {
+      if (selectedTaskIds.has(id)) {
+        selectedTaskIds.delete(id);
+      } else {
+        selectedTaskIds.add(id);
+      }
+      updateSelectionUi();
+    }
+
+    function setSettingsMessage(text) {
+      settingsMessage.textContent = text;
+    }
+
+    async function refreshStatus() {
+      document.querySelector("#timezoneStatus").textContent =
+        `${browserTimeZone()}, UTC${formatOffset(-new Date().getTimezoneOffset())}`;
+      try {
+        const res = await fetch(statusUrl, { cache: "no-store" });
+        if (!res.ok) throw new Error("status failed");
+        const status = await res.json();
+        document.querySelector("#telegramStatus").textContent =
+          status.telegramToken && status.chatId ? "подключен" : "не настроен";
+        document.querySelector("#serverTaskCount").textContent = String(status.tasks ?? tasks.length);
+      } catch {
+        document.querySelector("#telegramStatus").textContent = "сервер недоступен";
+        document.querySelector("#serverTaskCount").textContent = "нет связи";
+      }
+    }
+
+    function formatOffset(minutes) {
+      const sign = minutes >= 0 ? "+" : "-";
+      const abs = Math.abs(minutes);
+      const hours = String(Math.floor(abs / 60)).padStart(2, "0");
+      const mins = String(abs % 60).padStart(2, "0");
+      return `${sign}${hours}:${mins}`;
+    }
+
+    function exportTasks() {
+      const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `tasks-${localIsoDate()}.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      setSettingsMessage("Экспорт готов");
+    }
+
+    async function importTasks(file) {
+      if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        if (!Array.isArray(data)) throw new Error("expected array");
+        tasks = data.map(normalizeTaskTime);
+        await persistAll();
+        render();
+        await refreshStatus();
+        setSettingsMessage(`Импортировано: ${tasks.length}`);
+      } catch {
+        setSettingsMessage("Не удалось импортировать JSON");
+      }
+    }
+
+    async function testTelegram() {
+      setSettingsMessage("Отправляю тест");
+      try {
+        const res = await fetch(testReminderUrl, { method: "POST" });
+        const data = await res.json();
+        setSettingsMessage(data.ok ? "Тест отправлен" : "Тест не отправлен");
+        await refreshStatus();
+      } catch {
+        setSettingsMessage("Сервер недоступен");
+      }
+    }
+
+    function render() {
+      renderStats();
+      updateSelectionUi();
+      const rows = visibleTasks();
+      list.innerHTML = "";
+      if (!rows.length) {
+        list.innerHTML = `<div class="empty">Здесь пока пусто</div>`;
+        return;
+      }
+
+      for (const task of rows) {
+        const el = document.createElement("article");
+        el.className = `task${task.done ? " done" : ""}${selectionMode ? " selecting" : ""}${selectedTaskIds.has(task.id) ? " selected" : ""}`;
+        const dc = dueClass(task.due);
+        el.innerHTML = `
+          <button class="check" aria-label="Готово">${task.done ? "✓" : ""}</button>
+          <div class="task-main">
+            <div class="title"></div>
+            <div class="meta">
+              <span class="pill ${task.priority}">${priorityLabel(task.priority)}</span>
+              <span class="pill">${typeLabel(task.type)}</span>
+              ${task.due ? `<span class="pill ${dc}">${dueLabel(task.due, task.time)}</span>` : ""}
+            </div>
+          </div>
+          <div class="menu">
+            <button class="mini edit" aria-label="Редактировать">⋯</button>
+          </div>
+        `;
+        el.querySelector(".title").textContent = task.text;
+        el.addEventListener("pointerdown", event => {
+          if (event.target.closest("button")) return;
+          longPressTimer = window.setTimeout(() => {
+            suppressNextTaskClick = true;
+            toggleTaskSelection(task.id);
+            render();
+          }, 550);
+        });
+        el.addEventListener("pointerup", () => window.clearTimeout(longPressTimer));
+        el.addEventListener("pointerleave", () => window.clearTimeout(longPressTimer));
+        el.addEventListener("pointercancel", () => window.clearTimeout(longPressTimer));
+        el.addEventListener("click", event => {
+          if (suppressNextTaskClick) {
+            suppressNextTaskClick = false;
+            event.preventDefault();
+            return;
+          }
+          if (!selectionMode || event.target.closest("button")) return;
+          event.preventDefault();
+          toggleTaskSelection(task.id);
+          render();
+        });
+        el.addEventListener("contextmenu", event => event.preventDefault());
+        el.querySelector(".check").addEventListener("click", async () => {
+          if (selectionMode) {
+            toggleTaskSelection(task.id);
+            render();
+            return;
+          }
+          task.done = !task.done;
+          task.updatedAt = new Date().toISOString();
+          if (task.done) {
+            await cancelLocalNotification(task);
+          } else {
+            await scheduleLocalNotification(task);
+          }
+          await updateTask(task);
+          render();
+        });
+        el.querySelector(".edit").addEventListener("click", () => {
+          if (selectionMode) {
+            toggleTaskSelection(task.id);
+            render();
+            return;
+          }
+          openDialog(task.id);
+        });
+        list.appendChild(el);
+      }
+    }
+
+    function openDialog(id = null) {
+      editingId = id;
+      const task = id ? tasks.find(t => t.id === id) : makeTask("");
+      document.querySelector("#dialogTitle").textContent = id ? "Редактировать" : "Новая задача";
+      fields.text.value = task.text || "";
+      syncChoiceField("type", task.type || "task");
+      syncChoiceField("priority", task.priority || "medium");
+      fields.due.value = task.due || localIsoDate();
+      fields.time.value = task.time || (id ? "" : defaultReminderTime());
+      allDayToggle.checked = id ? !fields.time.value : false;
+      fields.time.disabled = allDayToggle.checked;
+      calendarViewDate = dateFromIso(fields.due.value) || new Date();
+      renderCalendar();
+      document.querySelector("#deleteBtn").style.display = id ? "block" : "none";
+      dialog.showModal();
+      fields.text.focus();
+    }
+
+    quickForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      const text = quickInput.value.trim();
+      if (!text) {
+        openDialog();
+        return;
+      }
+      const task = makeTask(text);
+      tasks.unshift(task);
+      quickInput.value = "";
+      await createTask(task);
+      render();
+    });
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const text = fields.text.value.trim();
+      if (!text) return;
+      const due = fields.due.value || "";
+      const time = allDayToggle.checked ? "" : normalizedTime(fields.time.value);
+      const data = {
+        text,
+        type: fields.type.value,
+        priority: fields.priority.value,
+        due,
+        time,
+        dueAtUtc: dueAtUtc(due, time),
+        sourceTimeZone: browserTimeZone(),
+        sourceOffsetMinutes: -new Date().getTimezoneOffset(),
+        project: "Напоминалка",
+        notifiedAt: "",
+        updatedAt: new Date().toISOString()
+      };
+      if (editingId) {
+        let savedTask = null;
+        tasks = tasks.map(task => {
+          if (task.id !== editingId) return task;
+          savedTask = { ...task, ...data };
+          return savedTask;
+        });
+        await scheduleLocalNotification(savedTask);
+        await updateTask(savedTask);
+      } else {
+        const savedTask = { ...makeTask(text), ...data };
+        tasks.unshift(savedTask);
+        await scheduleLocalNotification(savedTask);
+        await createTask(savedTask);
+      }
+      dialog.close();
+      render();
+    });
+
+    document.querySelector("#cancelBtn").addEventListener("click", () => dialog.close());
+    document.querySelector("#deleteBtn").addEventListener("click", async () => {
+      if (!editingId) return;
+      const task = tasks.find(task => task.id === editingId);
+      await cancelLocalNotification(task);
+      tasks = tasks.filter(task => task.id !== editingId);
+      await deleteTaskById(editingId);
+      dialog.close();
+      render();
+    });
+
+    bulkDeleteBtn.addEventListener("click", async () => {
+      if (!selectedTaskIds.size) return;
+      const removed = tasks.filter(task => selectedTaskIds.has(task.id));
+      await Promise.all(removed.map(cancelLocalNotification));
+      tasks = tasks.filter(task => !selectedTaskIds.has(task.id));
+      await Promise.all(removed.map(task => deleteTaskById(task.id)));
+      clearSelection();
+      render();
+    });
+
+    filters.forEach(btn => {
+      btn.addEventListener("click", () => {
+        filters.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        render();
+      });
+    });
+
+    searchInput.addEventListener("input", render);
+    document.querySelectorAll("[data-choice-field] .choice-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        syncChoiceField(btn.closest("[data-choice-field]").dataset.choiceField, btn.dataset.choiceValue);
+      });
+    });
+    fields.due.addEventListener("input", () => {
+      fields.due.value = formatDateInput(fields.due.value);
+    });
+    fields.time.addEventListener("input", () => {
+      fields.time.value = formatTimeInput(fields.time.value);
+    });
+    allDayToggle.addEventListener("change", () => {
+      fields.time.disabled = allDayToggle.checked;
+      if (allDayToggle.checked) fields.time.value = "";
+    });
+    document.querySelector("#todayBtn").addEventListener("click", () => setSelectedDate(new Date()));
+    document.querySelector("#prevMonthBtn").addEventListener("click", () => {
+      calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() - 1, 1);
+      renderCalendar();
+    });
+    document.querySelector("#nextMonthBtn").addEventListener("click", () => {
+      calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + 1, 1);
+      renderCalendar();
+    });
+    document.querySelectorAll("[data-date-preset]").forEach(btn => {
+      btn.addEventListener("click", () => setSelectedDate(addDays(new Date(), Number(btn.dataset.datePreset))));
+    });
+    searchToggle.addEventListener("click", () => {
+      if (searchWrap.classList.contains("active") && !searchInput.value.trim()) {
+        searchWrap.classList.remove("active");
+        return;
+      }
+      searchWrap.classList.add("active");
+      searchInput.focus();
+    });
+    searchInput.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        searchInput.value = "";
+        searchWrap.classList.remove("active");
+        render();
+      }
+    });
+
+    document.querySelector("#settingsBtn").addEventListener("click", async () => {
+      setSettingsMessage("");
+      settingsDialog.showModal();
+      await refreshStatus();
+    });
+    document.querySelector("#settingsCloseBtn").addEventListener("click", () => settingsDialog.close());
+    document.querySelector("#testTelegramBtn").addEventListener("click", testTelegram);
+    document.querySelector("#exportBtn").addEventListener("click", exportTasks);
+    document.querySelector("#importBtn").addEventListener("click", () => document.querySelector("#importFile").click());
+    document.querySelector("#importFile").addEventListener("change", event => {
+      importTasks(event.target.files[0]);
+      event.target.value = "";
+    });
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+
+    load();
+  </script>
+</body>
+</html>

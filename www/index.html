@@ -125,6 +125,11 @@
       gap: 8px;
     }
 
+    .quick-wrap {
+      display: grid;
+      gap: 8px;
+    }
+
     .quick input, .search input, textarea, select, .field-input {
       width: 100%;
       min-height: var(--control-h);
@@ -139,6 +144,36 @@
     .quick input:focus, .search input:focus, textarea:focus, select:focus, .field-input:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .quick-preview {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 12px;
+      overflow: hidden;
+    }
+
+    .quick-preview.active {
+      display: flex;
+    }
+
+    .quick-preview-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .quick-preview-chip {
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 7px;
+      color: var(--accent-strong);
+      background: var(--accent-soft);
+      line-height: 1.1;
     }
 
     .icon-btn, .primary, .ghost {
@@ -841,10 +876,13 @@
         </div>
       </div>
 
-      <form class="quick" id="quickForm">
-        <input id="quickInput" autocomplete="off" placeholder="Быстро добавить задачу">
-        <button class="primary" type="submit" aria-label="Добавить">+</button>
-      </form>
+      <div class="quick-wrap">
+        <form class="quick" id="quickForm">
+          <input id="quickInput" autocomplete="off" placeholder="Купить молоко завтра 18:00 важно">
+          <button class="primary" type="submit" aria-label="Добавить">+</button>
+        </form>
+        <div class="quick-preview" id="quickPreview" aria-live="polite"></div>
+      </div>
     </header>
 
     <section class="toolbar">
@@ -974,6 +1012,7 @@
     const form = document.querySelector("#taskForm");
     const quickForm = document.querySelector("#quickForm");
     const quickInput = document.querySelector("#quickInput");
+    const quickPreview = document.querySelector("#quickPreview");
     const searchWrap = document.querySelector("#searchWrap");
     const searchToggle = document.querySelector("#searchToggle");
     const searchInput = document.querySelector("#searchInput");
@@ -1276,6 +1315,119 @@
 
     function normalizedTime(value) {
       return /^\d{2}:\d{2}$/.test(value || "") ? value : "";
+    }
+
+    function parseQuickTask(rawText) {
+      let text = (rawText || "").trim();
+      const parsed = {
+        text,
+        type: "task",
+        priority: "medium",
+        due: "",
+        time: "",
+        dueAtUtc: "",
+        sourceTimeZone: browserTimeZone(),
+        sourceOffsetMinutes: -new Date().getTimezoneOffset()
+      };
+
+      function consume(regex, handler) {
+        text = text.replace(regex, (...args) => {
+          handler?.(...args);
+          return " ";
+        });
+      }
+
+      consume(/(?<![\p{L}\p{N}_])(срочно|важно|важная|важный|важное)(?![\p{L}\p{N}_])/giu, () => {
+        parsed.priority = "high";
+      });
+      consume(/(?<![\p{L}\p{N}_])(низко|низкая|низкий|низкое|неважно)(?![\p{L}\p{N}_])/giu, () => {
+        parsed.priority = "low";
+      });
+      consume(/(?<![\p{L}\p{N}_])(средне|средняя|средний|среднее)(?![\p{L}\p{N}_])/giu, () => {
+        parsed.priority = "medium";
+      });
+      consume(/(?<![\p{L}\p{N}_])(напомни|напоминание|напоминалка)(?![\p{L}\p{N}_])/giu, () => {
+        parsed.type = "reminder";
+      });
+      consume(/(?<![\p{L}\p{N}_])задача(?![\p{L}\p{N}_])/giu, () => {
+        parsed.type = "task";
+      });
+
+      consume(/(?<![\p{L}\p{N}_])через\s+(\d{1,2})\s*(часов|часа|час)(?![\p{L}\p{N}_])/giu, (match, amount) => {
+        const dueDate = new Date();
+        dueDate.setHours(dueDate.getHours() + Number(amount), dueDate.getMinutes(), 0, 0);
+        parsed.due = localIsoDate(dueDate);
+        parsed.time = `${String(dueDate.getHours()).padStart(2, "0")}:${String(dueDate.getMinutes()).padStart(2, "0")}`;
+      });
+      consume(/(?<![\p{L}\p{N}_])через\s+(\d{1,2})\s*(дней|дня|день)(?![\p{L}\p{N}_])/giu, (match, amount) => {
+        parsed.due = localIsoDate(addDays(new Date(), Number(amount)));
+      });
+      consume(/(?<![\p{L}\p{N}_])послезавтра(?![\p{L}\p{N}_])/giu, () => {
+        parsed.due = localIsoDate(addDays(new Date(), 2));
+      });
+      consume(/(?<![\p{L}\p{N}_])завтра(?![\p{L}\p{N}_])/giu, () => {
+        parsed.due = localIsoDate(addDays(new Date(), 1));
+      });
+      consume(/(?<![\p{L}\p{N}_])сегодня(?![\p{L}\p{N}_])/giu, () => {
+        parsed.due = localIsoDate();
+      });
+      consume(/(?<!\d)(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?(?!\d)/giu, (match, day, month, year) => {
+        const now = new Date();
+        const fullYear = year
+          ? Number(String(year).length === 2 ? `20${year}` : year)
+          : now.getFullYear();
+        const date = new Date(fullYear, Number(month) - 1, Number(day));
+        if (!Number.isNaN(date.getTime())) {
+          parsed.due = localIsoDate(date);
+        }
+      });
+      consume(/(?<!\d)(?:в\s*)?(\d{1,2})[:.](\d{2})(?!\d)/giu, (match, hours, minutes) => {
+        const h = Number(hours);
+        const m = Number(minutes);
+        if (h <= 23 && m <= 59) {
+          parsed.time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+          if (!parsed.due) parsed.due = localIsoDate();
+        }
+      });
+      consume(/(?<![\p{L}\p{N}_])в\s+(\d{1,2})\s*(часов|часа|час)?(?![\p{L}\p{N}_])/giu, (match, hours) => {
+        const h = Number(hours);
+        if (h <= 23) {
+          parsed.time = `${String(h).padStart(2, "0")}:00`;
+          if (!parsed.due) parsed.due = localIsoDate();
+        }
+      });
+
+      parsed.text = text.replace(/\s+/g, " ").trim() || (rawText || "").trim();
+      parsed.dueAtUtc = dueAtUtc(parsed.due, parsed.time);
+      return parsed;
+    }
+
+    function renderQuickPreview() {
+      const parsed = parseQuickTask(quickInput.value);
+      quickPreview.innerHTML = "";
+      if (!quickInput.value.trim()) {
+        quickPreview.classList.remove("active");
+        return;
+      }
+
+      const summary = document.createElement("span");
+      summary.className = "quick-preview-text";
+      summary.textContent = parsed.text;
+      quickPreview.appendChild(summary);
+
+      const chips = [
+        typeLabel(parsed.type),
+        priorityLabel(parsed.priority),
+        parsed.due ? dueLabel(parsed.due, parsed.time) : ""
+      ].filter(Boolean);
+
+      for (const chipText of chips) {
+        const chip = document.createElement("span");
+        chip.className = "quick-preview-chip";
+        chip.textContent = chipText;
+        quickPreview.appendChild(chip);
+      }
+      quickPreview.classList.add("active");
     }
 
     function renderCalendar() {
@@ -1591,17 +1743,30 @@
 
     quickForm.addEventListener("submit", async event => {
       event.preventDefault();
-      const text = quickInput.value.trim();
-      if (!text) {
+      const parsed = parseQuickTask(quickInput.value);
+      if (!quickInput.value.trim()) {
         openDialog();
         return;
       }
-      const task = makeTask(text);
+      const task = {
+        ...makeTask(parsed.text),
+        type: parsed.type,
+        priority: parsed.priority,
+        due: parsed.due,
+        time: parsed.time,
+        dueAtUtc: parsed.dueAtUtc,
+        sourceTimeZone: parsed.sourceTimeZone,
+        sourceOffsetMinutes: parsed.sourceOffsetMinutes
+      };
       tasks.unshift(task);
       quickInput.value = "";
+      renderQuickPreview();
+      await scheduleLocalNotification(task);
       await createTask(task);
       render();
     });
+
+    quickInput.addEventListener("input", renderQuickPreview);
 
     form.addEventListener("submit", async event => {
       event.preventDefault();

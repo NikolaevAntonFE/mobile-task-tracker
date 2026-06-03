@@ -231,6 +231,10 @@
       min-width: 0;
     }
 
+    .segments.main-tabs {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
     .segments button {
       min-height: 44px;
       border: 0;
@@ -245,11 +249,19 @@
       text-align: center;
     }
 
+    .main-tabs button {
+      font-size: 12px;
+    }
+
     .segments button b {
       display: block;
       color: var(--text);
       font-size: 16px;
       line-height: 1.1;
+    }
+
+    .main-tabs button b {
+      font-size: 15px;
     }
 
     .segments button span {
@@ -807,7 +819,7 @@
       <div class="top">
         <div class="title-row">
           <h1>Задачи</h1>
-          <div class="count" id="countText">0 открытых</div>
+          <div class="count" id="countText">0 на сегодня</div>
         </div>
         <div class="top-actions">
           <button class="icon-btn bulk-delete" id="bulkDeleteBtn" type="button" aria-label="Удалить выбранные">
@@ -839,14 +851,18 @@
       <div class="search" id="searchWrap">
         <input id="searchInput" autocomplete="off" placeholder="Поиск">
       </div>
-      <div class="segments" role="tablist">
-        <button data-filter="open" class="active" type="button">
-          <b id="filterOpenCount">0</b>
-          <span>Открытые</span>
+      <div class="segments main-tabs" role="tablist">
+        <button data-filter="today" class="active" type="button">
+          <b id="filterTodayCount">0</b>
+          <span>Сегодня</span>
         </button>
-        <button data-filter="overdue" type="button">
-          <b id="filterOverdueCount">0</b>
-          <span>Просрочка</span>
+        <button data-filter="inbox" type="button">
+          <b id="filterInboxCount">0</b>
+          <span>Inbox</span>
+        </button>
+        <button data-filter="upcoming" type="button">
+          <b id="filterUpcomingCount">0</b>
+          <span>Будущие</span>
         </button>
         <button data-filter="done" type="button">
           <b id="filterDoneCount">0</b>
@@ -974,7 +990,7 @@
       time: document.querySelector("#taskTime"),
     };
     let tasks = [];
-    let currentFilter = "open";
+    let currentFilter = "today";
     let editingId = null;
     const selectedTaskIds = new Set();
     let selectionMode = false;
@@ -1308,26 +1324,56 @@
       return "Напоминалка";
     }
 
-    function dueClass(due) {
-      if (!due) return "";
-      const today = todayIso();
-      if (due < today) return "overdue";
-      if (due === today) return "today";
+    function dueClass(task) {
+      if (!task.due) return "";
+      if (isOverdue(task)) return "overdue";
+      if (task.due === todayIso()) return "today";
       return "";
+    }
+
+    function dueDateTime(task) {
+      if (!task.due) return null;
+      const time = task.time || "23:59";
+      const date = new Date(`${task.due}T${time}:00`);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function isOverdue(task) {
+      if (!task.due || task.done) return false;
+      const dueAt = dueDateTime(task);
+      return dueAt ? dueAt < new Date() : task.due < todayIso();
+    }
+
+    function isTodayTask(task) {
+      return !task.done && (task.due === todayIso() || isOverdue(task));
+    }
+
+    function isInboxTask(task) {
+      return !task.done && !task.due;
+    }
+
+    function isUpcomingTask(task) {
+      return !task.done && task.due > todayIso();
     }
 
     function visibleTasks() {
       const q = searchInput.value.trim().toLowerCase();
       return tasks
         .filter(task => {
-          if (currentFilter === "open") return !task.done;
-          if (currentFilter === "overdue") return !task.done && task.due && task.due < todayIso();
+          if (currentFilter === "today") return isTodayTask(task);
+          if (currentFilter === "inbox") return isInboxTask(task);
+          if (currentFilter === "upcoming") return isUpcomingTask(task);
           if (currentFilter === "done") return task.done;
           return true;
         })
         .filter(task => !q || [task.text, task.project, task.type].join(" ").toLowerCase().includes(q))
         .sort((a, b) => {
           if (a.done !== b.done) return a.done ? 1 : -1;
+          if (currentFilter === "today") {
+            const ao = isOverdue(a);
+            const bo = isOverdue(b);
+            if (ao !== bo) return ao ? -1 : 1;
+          }
           const ad = a.dueAtUtc || `${a.due || "9999"} ${a.time || "23:59"}`;
           const bd = b.dueAtUtc || `${b.due || "9999"} ${b.time || "23:59"}`;
           if (ad !== bd) return ad.localeCompare(bd);
@@ -1337,11 +1383,21 @@
     }
 
     function renderStats() {
-      const open = tasks.filter(t => !t.done);
-      document.querySelector("#filterOpenCount").textContent = open.length;
-      document.querySelector("#filterOverdueCount").textContent = open.filter(t => t.due && t.due < todayIso()).length;
+      const today = tasks.filter(isTodayTask);
+      document.querySelector("#filterTodayCount").textContent = today.length;
+      document.querySelector("#filterInboxCount").textContent = tasks.filter(isInboxTask).length;
+      document.querySelector("#filterUpcomingCount").textContent = tasks.filter(isUpcomingTask).length;
       document.querySelector("#filterDoneCount").textContent = tasks.filter(t => t.done).length;
-      document.querySelector("#countText").textContent = `${open.length} открытых`;
+      document.querySelector("#countText").textContent = `${today.length} на сегодня`;
+    }
+
+    function emptyText() {
+      return {
+        today: "На сегодня пусто",
+        inbox: "Inbox пуст",
+        upcoming: "Будущих задач нет",
+        done: "Закрытых задач нет"
+      }[currentFilter] || "Здесь пока пусто";
     }
 
     function updateSelectionUi() {
@@ -1441,14 +1497,14 @@
       const rows = visibleTasks();
       list.innerHTML = "";
       if (!rows.length) {
-        list.innerHTML = `<div class="empty">Здесь пока пусто</div>`;
+        list.innerHTML = `<div class="empty">${emptyText()}</div>`;
         return;
       }
 
       for (const task of rows) {
         const el = document.createElement("article");
         el.className = `task${task.done ? " done" : ""}${selectionMode ? " selecting" : ""}${selectedTaskIds.has(task.id) ? " selected" : ""}`;
-        const dc = dueClass(task.due);
+        const dc = dueClass(task);
         el.innerHTML = `
           <button class="check" aria-label="Готово">${task.done ? "✓" : ""}</button>
           <div class="task-main">

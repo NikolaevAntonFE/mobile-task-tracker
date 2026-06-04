@@ -332,6 +332,7 @@
       min-width: 0;
       touch-action: manipulation;
       user-select: none;
+      cursor: pointer;
     }
 
     .task.selecting {
@@ -1689,10 +1690,14 @@
             event.preventDefault();
             return;
           }
-          if (!selectionMode || event.target.closest("button")) return;
+          if (event.target.closest("button")) return;
           event.preventDefault();
-          toggleTaskSelection(task.id);
-          render();
+          if (selectionMode) {
+            toggleTaskSelection(task.id);
+            render();
+            return;
+          }
+          openDialog(task.id);
         });
         el.addEventListener("contextmenu", event => event.preventDefault());
         el.querySelector(".check").addEventListener("click", async () => {

@@ -411,6 +411,12 @@
       white-space: nowrap;
     }
 
+    button.pill {
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+    }
+
     .pill.high { color: var(--red); border-color: rgba(255, 123, 114, .45); }
     .pill.medium { color: var(--yellow); border-color: rgba(244, 201, 93, .45); }
     .pill.low { color: var(--green); border-color: rgba(125, 220, 138, .45); }
@@ -497,6 +503,11 @@
     .sheet-actions .ghost,
     .sheet-actions .primary {
       width: 100%;
+    }
+
+    .modal.schedule-only .field-block.text-field,
+    .modal.schedule-only .form-grid {
+      display: none;
     }
 
     .modal {
@@ -971,7 +982,7 @@
   <dialog id="taskDialog">
     <form class="modal" id="taskForm" method="dialog">
       <h2 id="dialogTitle">Новая задача</h2>
-      <label class="field-block">
+      <label class="field-block text-field">
         <span class="field-label">Описание</span>
         <textarea id="taskText" placeholder="Что нужно сделать?"></textarea>
       </label>
@@ -1042,14 +1053,7 @@
         <div class="action-sheet-title" id="actionTitle">Задача</div>
         <div class="action-sheet-meta" id="actionMeta">Действия</div>
       </div>
-      <div class="sheet-actions">
-        <button class="primary" id="sheetEditBtn" type="button">Редактировать</button>
-        <button class="ghost" data-sheet-date="0" type="button">Сегодня</button>
-        <button class="ghost" data-sheet-date="1" type="button">Завтра</button>
-        <button class="ghost" data-sheet-date="3" type="button">Через 3 дня</button>
-        <button class="ghost" id="sheetNoDueBtn" type="button">Без срока</button>
-        <button class="ghost danger" id="sheetDeleteBtn" type="button">Удалить</button>
-      </div>
+      <div class="sheet-actions" id="sheetActions"></div>
       <button class="ghost" value="cancel" type="button" id="sheetCloseBtn">Закрыть</button>
     </form>
   </dialog>
@@ -1084,6 +1088,7 @@
     const list = document.querySelector("#taskList");
     const dialog = document.querySelector("#taskDialog");
     const actionDialog = document.querySelector("#actionDialog");
+    const sheetActions = document.querySelector("#sheetActions");
     const settingsDialog = document.querySelector("#settingsDialog");
     const form = document.querySelector("#taskForm");
     const quickForm = document.querySelector("#quickForm");
@@ -1108,6 +1113,7 @@
     let currentFilter = "today";
     let editingId = null;
     let actionTaskId = null;
+    let dialogMode = "full";
     const selectedTaskIds = new Set();
     let selectionMode = false;
     let longPressTimer = null;
@@ -1557,6 +1563,12 @@
       active.blur();
     }
 
+    function collapseSearchIfEmpty() {
+      if (!searchInput.value.trim()) {
+        searchWrap.classList.remove("active");
+      }
+    }
+
     function syncChoiceField(name, value) {
       const input = name === "type" ? fields.type : fields.priority;
       input.value = value;
@@ -1674,19 +1686,6 @@
       return tasks.find(task => task.id === actionTaskId) || null;
     }
 
-    function openActionSheet(id) {
-      const task = tasks.find(item => item.id === id);
-      if (!task) return;
-      actionTaskId = id;
-      document.querySelector("#actionTitle").textContent = task.text || "Задача";
-      document.querySelector("#actionMeta").textContent = [
-        priorityLabel(task.priority),
-        typeLabel(task.type),
-        task.due ? dueLabel(task.due, task.time) : "без срока"
-      ].filter(Boolean).join(" · ");
-      actionDialog.showModal();
-    }
-
     async function saveTaskChange(task) {
       task.updatedAt = new Date().toISOString();
       await scheduleLocalNotification(task);
@@ -1694,17 +1693,36 @@
       render();
     }
 
-    async function rescheduleActionTask(days) {
-      const task = actionTask();
-      if (!task) return;
-      const date = addDays(new Date(), days);
-      task.due = localIsoDate(date);
-      if (days === 0 && task.time && dueDateTime(task) <= new Date()) {
-        task.time = defaultReminderTime();
-      }
-      task.dueAtUtc = dueAtUtc(task.due, task.time);
-      actionDialog.close();
-      await saveTaskChange(task);
+    function addSheetButton(label, className, handler) {
+      const button = document.createElement("button");
+      button.className = className;
+      button.type = "button";
+      button.textContent = label;
+      button.addEventListener("click", handler);
+      sheetActions.appendChild(button);
+    }
+
+    function openChoiceSheet(id, field) {
+      actionTaskId = id;
+      const currentTask = tasks.find(item => item.id === id);
+      if (!currentTask) return;
+      sheetActions.innerHTML = "";
+      const isPriority = field === "priority";
+      document.querySelector("#actionTitle").textContent = isPriority ? "Важность" : "Тип";
+      document.querySelector("#actionMeta").textContent = currentTask.text || "Задача";
+      const options = isPriority
+        ? [["high", "Важно"], ["medium", "Средне"], ["low", "Низко"]]
+        : [["task", "Задача"], ["reminder", "Напоминание"]];
+      options.forEach(([value, label]) => {
+        addSheetButton(label, currentTask[field] === value ? "primary" : "ghost", async () => {
+          const selected = actionTask();
+          if (!selected) return;
+          selected[field] = value;
+          actionDialog.close();
+          await saveTaskChange(selected);
+        });
+      });
+      actionDialog.showModal();
     }
 
     async function clearActionTaskDue() {
@@ -1716,16 +1734,6 @@
       actionDialog.close();
       await cancelLocalNotification(task);
       await updateTask(task);
-      render();
-    }
-
-    async function deleteActionTask() {
-      const task = actionTask();
-      if (!task) return;
-      actionDialog.close();
-      await cancelLocalNotification(task);
-      tasks = tasks.filter(item => item.id !== task.id);
-      await deleteTaskById(task.id);
       render();
     }
 
@@ -1845,9 +1853,9 @@
           <div class="task-main">
             <div class="title"></div>
             <div class="meta">
-              <span class="pill ${task.priority}">${priorityLabel(task.priority)}</span>
-              <span class="pill">${typeLabel(task.type)}</span>
-              ${task.due ? `<span class="pill ${dc}">${dueLabel(task.due, task.time)}</span>` : ""}
+              <button class="pill ${task.priority}" data-attr="priority" type="button">${priorityLabel(task.priority)}</button>
+              <button class="pill" data-attr="type" type="button">${typeLabel(task.type)}</button>
+              ${task.due ? `<button class="pill ${dc}" data-attr="due" type="button">${dueLabel(task.due, task.time)}</button>` : ""}
             </div>
           </div>
           <div class="menu">
@@ -1898,22 +1906,41 @@
           await updateTask(task);
           render();
         });
+        el.querySelectorAll("[data-attr]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            if (selectionMode) {
+              toggleTaskSelection(task.id);
+              render();
+              return;
+            }
+            const attr = btn.dataset.attr;
+            if (attr === "priority" || attr === "type") {
+              openChoiceSheet(task.id, attr);
+              return;
+            }
+            if (attr === "due") {
+              openDialog(task.id, "schedule");
+            }
+          });
+        });
         el.querySelector(".edit").addEventListener("click", () => {
           if (selectionMode) {
             toggleTaskSelection(task.id);
             render();
             return;
           }
-          openActionSheet(task.id);
+          openDialog(task.id);
         });
         list.appendChild(el);
       }
     }
 
-    function openDialog(id = null) {
+    function openDialog(id = null, mode = "full") {
       editingId = id;
+      dialogMode = mode;
       const task = id ? tasks.find(t => t.id === id) : makeTask("");
-      document.querySelector("#dialogTitle").textContent = id ? "Редактировать" : "Новая задача";
+      form.classList.toggle("schedule-only", mode === "schedule");
+      document.querySelector("#dialogTitle").textContent = mode === "schedule" ? "Дата и время" : (id ? "Редактировать" : "Новая задача");
       fields.text.value = task.text || "";
       syncChoiceField("type", task.type || "task");
       syncChoiceField("priority", task.priority || "medium");
@@ -1923,9 +1950,11 @@
       fields.time.disabled = allDayToggle.checked;
       calendarViewDate = dateFromIso(fields.due.value) || new Date();
       renderCalendar();
-      document.querySelector("#deleteBtn").style.display = id ? "block" : "none";
+      document.querySelector("#deleteBtn").style.display = id && mode === "full" ? "block" : "none";
       dialog.showModal();
-      fields.text.focus();
+      if (mode === "full") {
+        fields.text.focus();
+      }
     }
 
     quickForm.addEventListener("submit", async event => {
@@ -1995,6 +2024,10 @@
     });
 
     document.querySelector("#cancelBtn").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("close", () => {
+      dialogMode = "full";
+      form.classList.remove("schedule-only");
+    });
     document.querySelector("#deleteBtn").addEventListener("click", async () => {
       if (!editingId) return;
       const task = tasks.find(task => task.id === editingId);
@@ -2005,20 +2038,10 @@
       render();
     });
 
-    document.querySelector("#sheetEditBtn").addEventListener("click", () => {
-      const task = actionTask();
-      if (!task) return;
-      actionDialog.close();
-      openDialog(task.id);
-    });
-    document.querySelectorAll("[data-sheet-date]").forEach(btn => {
-      btn.addEventListener("click", () => rescheduleActionTask(Number(btn.dataset.sheetDate)));
-    });
-    document.querySelector("#sheetNoDueBtn").addEventListener("click", clearActionTaskDue);
-    document.querySelector("#sheetDeleteBtn").addEventListener("click", deleteActionTask);
     document.querySelector("#sheetCloseBtn").addEventListener("click", () => actionDialog.close());
     actionDialog.addEventListener("close", () => {
       actionTaskId = null;
+      sheetActions.innerHTML = "";
     });
 
     bulkDeleteBtn.addEventListener("click", async () => {
@@ -2041,6 +2064,7 @@
     });
 
     searchInput.addEventListener("input", render);
+    searchInput.addEventListener("blur", collapseSearchIfEmpty);
     document.querySelectorAll("[data-choice-field] .choice-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         syncChoiceField(btn.closest("[data-choice-field]").dataset.choiceField, btn.dataset.choiceValue);

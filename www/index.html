@@ -1616,6 +1616,15 @@
       return !task.done && task.due > todayIso();
     }
 
+    function todayTimeSection(task) {
+      if (!task.time) return "Без времени";
+      const hour = Number((task.time || "").split(":")[0]);
+      if (!Number.isFinite(hour)) return "Без времени";
+      if (hour < 12) return "Утро";
+      if (hour < 18) return "День";
+      return "Вечер";
+    }
+
     function visibleTasks() {
       const q = searchInput.value.trim().toLowerCase();
       return tasks
@@ -1633,6 +1642,8 @@
             const ao = isOverdue(a);
             const bo = isOverdue(b);
             if (ao !== bo) return ao ? -1 : 1;
+            if (a.time && !b.time) return -1;
+            if (!a.time && b.time) return 1;
           }
           const ad = a.dueAtUtc || `${a.due || "9999"} ${a.time || "23:59"}`;
           const bd = b.dueAtUtc || `${b.due || "9999"} ${b.time || "23:59"}`;
@@ -1662,7 +1673,7 @@
 
     function groupLabel(task) {
       if (currentFilter === "today") {
-        return isOverdue(task) ? "Просрочено" : "Сегодня";
+        return isOverdue(task) ? "Просрочено" : todayTimeSection(task);
       }
       if (currentFilter === "upcoming") {
         return shortDateText(task.due);

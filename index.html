@@ -454,6 +454,51 @@
       background: rgba(0, 0, 0, .62);
     }
 
+    .action-dialog {
+      width: min(560px, calc(100% - 24px));
+      margin: auto auto max(12px, env(safe-area-inset-bottom));
+      border-radius: 14px 14px var(--radius) var(--radius);
+    }
+
+    .action-sheet {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .action-sheet-head {
+      display: grid;
+      gap: 4px;
+      padding: 2px 2px 6px;
+      min-width: 0;
+    }
+
+    .action-sheet-title {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .action-sheet-meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .sheet-actions {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .sheet-actions .ghost,
+    .sheet-actions .primary {
+      width: 100%;
+    }
+
     .modal {
       padding: 14px;
       display: grid;
@@ -991,6 +1036,24 @@
     </form>
   </dialog>
 
+  <dialog class="action-dialog" id="actionDialog">
+    <form class="action-sheet" method="dialog">
+      <div class="action-sheet-head">
+        <div class="action-sheet-title" id="actionTitle">Задача</div>
+        <div class="action-sheet-meta" id="actionMeta">Действия</div>
+      </div>
+      <div class="sheet-actions">
+        <button class="primary" id="sheetEditBtn" type="button">Редактировать</button>
+        <button class="ghost" data-sheet-date="0" type="button">Сегодня</button>
+        <button class="ghost" data-sheet-date="1" type="button">Завтра</button>
+        <button class="ghost" data-sheet-date="3" type="button">Через 3 дня</button>
+        <button class="ghost" id="sheetNoDueBtn" type="button">Без срока</button>
+        <button class="ghost danger" id="sheetDeleteBtn" type="button">Удалить</button>
+      </div>
+      <button class="ghost" value="cancel" type="button" id="sheetCloseBtn">Закрыть</button>
+    </form>
+  </dialog>
+
   <dialog id="settingsDialog">
     <form class="modal" method="dialog">
       <h2>Настройки</h2>
@@ -1020,6 +1083,7 @@
     const filters = document.querySelectorAll("[data-filter]");
     const list = document.querySelector("#taskList");
     const dialog = document.querySelector("#taskDialog");
+    const actionDialog = document.querySelector("#actionDialog");
     const settingsDialog = document.querySelector("#settingsDialog");
     const form = document.querySelector("#taskForm");
     const quickForm = document.querySelector("#quickForm");
@@ -1043,6 +1107,7 @@
     let tasks = [];
     let currentFilter = "today";
     let editingId = null;
+    let actionTaskId = null;
     const selectedTaskIds = new Set();
     let selectionMode = false;
     let longPressTimer = null;
@@ -1605,6 +1670,65 @@
       list.appendChild(heading);
     }
 
+    function actionTask() {
+      return tasks.find(task => task.id === actionTaskId) || null;
+    }
+
+    function openActionSheet(id) {
+      const task = tasks.find(item => item.id === id);
+      if (!task) return;
+      actionTaskId = id;
+      document.querySelector("#actionTitle").textContent = task.text || "Задача";
+      document.querySelector("#actionMeta").textContent = [
+        priorityLabel(task.priority),
+        typeLabel(task.type),
+        task.due ? dueLabel(task.due, task.time) : "без срока"
+      ].filter(Boolean).join(" · ");
+      actionDialog.showModal();
+    }
+
+    async function saveTaskChange(task) {
+      task.updatedAt = new Date().toISOString();
+      await scheduleLocalNotification(task);
+      await updateTask(task);
+      render();
+    }
+
+    async function rescheduleActionTask(days) {
+      const task = actionTask();
+      if (!task) return;
+      const date = addDays(new Date(), days);
+      task.due = localIsoDate(date);
+      if (days === 0 && task.time && dueDateTime(task) <= new Date()) {
+        task.time = defaultReminderTime();
+      }
+      task.dueAtUtc = dueAtUtc(task.due, task.time);
+      actionDialog.close();
+      await saveTaskChange(task);
+    }
+
+    async function clearActionTaskDue() {
+      const task = actionTask();
+      if (!task) return;
+      task.due = "";
+      task.time = "";
+      task.dueAtUtc = "";
+      actionDialog.close();
+      await cancelLocalNotification(task);
+      await updateTask(task);
+      render();
+    }
+
+    async function deleteActionTask() {
+      const task = actionTask();
+      if (!task) return;
+      actionDialog.close();
+      await cancelLocalNotification(task);
+      tasks = tasks.filter(item => item.id !== task.id);
+      await deleteTaskById(task.id);
+      render();
+    }
+
     function updateSelectionUi() {
       const selectedCount = selectedTaskIds.size;
       selectionMode = selectedCount > 0;
@@ -1780,7 +1904,7 @@
             render();
             return;
           }
-          openDialog(task.id);
+          openActionSheet(task.id);
         });
         list.appendChild(el);
       }
@@ -1879,6 +2003,22 @@
       await deleteTaskById(editingId);
       dialog.close();
       render();
+    });
+
+    document.querySelector("#sheetEditBtn").addEventListener("click", () => {
+      const task = actionTask();
+      if (!task) return;
+      actionDialog.close();
+      openDialog(task.id);
+    });
+    document.querySelectorAll("[data-sheet-date]").forEach(btn => {
+      btn.addEventListener("click", () => rescheduleActionTask(Number(btn.dataset.sheetDate)));
+    });
+    document.querySelector("#sheetNoDueBtn").addEventListener("click", clearActionTaskDue);
+    document.querySelector("#sheetDeleteBtn").addEventListener("click", deleteActionTask);
+    document.querySelector("#sheetCloseBtn").addEventListener("click", () => actionDialog.close());
+    actionDialog.addEventListener("close", () => {
+      actionTaskId = null;
     });
 
     bulkDeleteBtn.addEventListener("click", async () => {

@@ -1482,6 +1482,16 @@
       renderCalendar();
     }
 
+    function isEditableElement(element) {
+      return Boolean(element?.closest?.("input, textarea, select, [contenteditable='true']"));
+    }
+
+    function dismissKeyboardOnOutsideTap(event) {
+      const active = document.activeElement;
+      if (!isEditableElement(active) || isEditableElement(event.target)) return;
+      active.blur();
+    }
+
     function syncChoiceField(name, value) {
       const input = name === "type" ? fields.type : fields.priority;
       input.value = value;
@@ -1820,6 +1830,7 @@
     });
 
     quickInput.addEventListener("input", renderQuickPreview);
+    document.addEventListener("pointerdown", dismissKeyboardOnOutsideTap, true);
 
     form.addEventListener("submit", async event => {
       event.preventDefault();

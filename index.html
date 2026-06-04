@@ -723,7 +723,7 @@
     .preset-row {
       display: grid;
       gap: 8px;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       padding: 4px 0 0;
     }
 
@@ -980,6 +980,7 @@
           <button class="preset-chip" data-date-preset="1" type="button">Завтра</button>
           <button class="preset-chip" data-date-preset="3" type="button">Через 3 дня</button>
           <button class="preset-chip" data-date-preset="7" type="button">Через 1 неделю</button>
+          <button class="preset-chip" id="clearDueBtn" type="button">Без срока</button>
         </div>
       </div>
       <div class="actions">
@@ -1442,12 +1443,13 @@
     }
 
     function renderCalendar() {
-      const selectedIso = fields.due.value || localIsoDate();
+      const hasDue = Boolean(fields.due.value);
+      const selectedIso = hasDue ? fields.due.value : localIsoDate();
       const selectedDate = dateFromIso(selectedIso) || new Date();
       const view = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth(), 1);
       const monthNames = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
       monthLabel.textContent = `${monthNames[view.getMonth()]} ${view.getFullYear()} г.`;
-      document.querySelector("#todayBtn").textContent = shortDateText(selectedIso);
+      document.querySelector("#todayBtn").textContent = hasDue ? shortDateText(selectedIso) : "Без срока";
       calendarGrid.innerHTML = "";
       const mondayOffset = (view.getDay() + 6) % 7;
       const firstCell = addDays(view, -mondayOffset);
@@ -1459,7 +1461,7 @@
         button.className = "calendar-day";
         if (date.getMonth() !== view.getMonth()) button.classList.add("muted");
         if (date.getDay() === 0) button.classList.add("sunday");
-        if (iso === selectedIso) button.classList.add("selected");
+        if (hasDue && iso === selectedIso) button.classList.add("selected");
         button.textContent = String(date.getDate());
         button.addEventListener("click", () => setSelectedDate(date));
         calendarGrid.appendChild(button);
@@ -1469,6 +1471,14 @@
     function setSelectedDate(date) {
       fields.due.value = localIsoDate(date);
       calendarViewDate = new Date(date.getFullYear(), date.getMonth(), 1);
+      renderCalendar();
+    }
+
+    function clearDueDate() {
+      fields.due.value = "";
+      fields.time.value = "";
+      allDayToggle.checked = false;
+      fields.time.disabled = false;
       renderCalendar();
     }
 
@@ -1907,6 +1917,7 @@
     document.querySelectorAll("[data-date-preset]").forEach(btn => {
       btn.addEventListener("click", () => setSelectedDate(addDays(new Date(), Number(btn.dataset.datePreset))));
     });
+    document.querySelector("#clearDueBtn").addEventListener("click", clearDueDate);
     searchToggle.addEventListener("click", () => {
       if (searchWrap.classList.contains("active") && !searchInput.value.trim()) {
         searchWrap.classList.remove("active");

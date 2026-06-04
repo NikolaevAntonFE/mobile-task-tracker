@@ -422,6 +422,7 @@
     .pill.low { color: var(--green); border-color: rgba(125, 220, 138, .45); }
     .pill.overdue { color: var(--red); }
     .pill.today { color: var(--accent); }
+    .pill.no-due { color: var(--muted); border-style: dashed; }
 
     .menu {
       display: grid;
@@ -1865,7 +1866,7 @@
             <div class="meta">
               <button class="pill ${task.priority}" data-attr="priority" type="button">${priorityLabel(task.priority)}</button>
               <button class="pill" data-attr="type" type="button">${typeLabel(task.type)}</button>
-              ${task.due ? `<button class="pill ${dc}" data-attr="due" type="button">${dueLabel(task.due, task.time)}</button>` : ""}
+              ${task.due ? `<button class="pill ${dc}" data-attr="due" type="button">${dueLabel(task.due, task.time)}</button>` : `<button class="pill no-due" data-attr="due" type="button">без срока</button>`}
             </div>
           </div>
           <div class="menu">

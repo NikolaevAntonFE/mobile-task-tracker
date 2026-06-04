@@ -1054,7 +1054,6 @@
         <div class="action-sheet-meta" id="actionMeta">Действия</div>
       </div>
       <div class="sheet-actions" id="sheetActions"></div>
-      <button class="ghost" value="cancel" type="button" id="sheetCloseBtn">Закрыть</button>
     </form>
   </dialog>
 
@@ -2049,7 +2048,9 @@
       render();
     });
 
-    document.querySelector("#sheetCloseBtn").addEventListener("click", () => actionDialog.close());
+    actionDialog.addEventListener("click", event => {
+      if (event.target === actionDialog) actionDialog.close();
+    });
     actionDialog.addEventListener("close", () => {
       actionTaskId = null;
       sheetActions.innerHTML = "";

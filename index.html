@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
@@ -495,13 +495,15 @@
     }
 
     dialog {
-      width: min(560px, calc(100% - 24px));
+      width: min(560px, calc(100% - 20px));
+      max-height: min(760px, calc(100dvh - 20px));
       border: 1px solid var(--line);
       border-radius: var(--radius);
       background: var(--panel);
       color: var(--text);
       padding: 0;
       box-shadow: var(--shadow);
+      overflow: hidden;
     }
 
     dialog::backdrop {
@@ -582,33 +584,60 @@
       width: 100%;
     }
 
+    .modal.schedule-only .modal-head,
     .modal.schedule-only .field-block.text-field,
     .modal.schedule-only .form-grid {
       display: none;
     }
 
     .modal {
-      padding: 14px;
+      padding: 0;
       display: grid;
-      gap: 10px;
-      max-height: calc(100vh - 28px);
+      gap: 0;
+      max-height: inherit;
       overflow-y: auto;
+      scrollbar-width: thin;
+    }
+
+    .modal-head {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: color-mix(in srgb, var(--panel) 94%, transparent);
+      border-bottom: 1px solid var(--line-soft);
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px 10px;
     }
 
     .modal h2 {
-      margin: 0 0 4px;
+      margin: 0;
       font-size: 18px;
+      line-height: 1.2;
     }
 
     textarea {
-      min-height: 86px;
+      min-height: 62px;
       resize: vertical;
     }
 
     .field-block {
       display: grid;
-      gap: 7px;
+      gap: 6px;
       min-width: 0;
+    }
+
+    .modal > .field-block,
+    .form-grid,
+    .time-panel {
+      margin: 0 14px;
+    }
+
+    .modal > .field-block {
+      padding-top: 10px;
     }
 
     .field-label {
@@ -630,27 +659,27 @@
     }
 
     .choice-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 1px 1px 4px;
+      scrollbar-width: none;
     }
 
-    .choice-grid.priority {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .choice-grid.repeat {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .choice-grid::-webkit-scrollbar {
+      display: none;
     }
 
     .choice-btn {
-      min-height: var(--control-h);
+      flex: 0 0 auto;
+      min-height: 34px;
       border: 1px solid var(--line);
-      border-radius: var(--radius);
+      border-radius: 999px;
       background: var(--panel);
       color: var(--muted);
       cursor: pointer;
-      padding: 0 10px;
+      padding: 0 13px;
+      white-space: nowrap;
     }
 
     .choice-btn.active {
@@ -663,7 +692,8 @@
     .form-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 10px;
+      gap: 8px;
+      padding-top: 8px;
     }
 
     .date-row {
@@ -676,12 +706,13 @@
       border-top: 1px solid var(--line-soft);
       border-bottom: 1px solid var(--line-soft);
       display: grid;
-      gap: 12px;
-      padding: 12px 0;
+      gap: 8px;
+      padding: 10px 0;
+      margin-top: 8px;
     }
 
     .time-panel-head,
-    .all-day-row,
+    .all-day-control,
     .calendar-nav,
     .time-summary {
       align-items: center;
@@ -690,8 +721,26 @@
     }
 
     .time-panel-head {
+      justify-content: space-between;
       font-weight: 700;
-      font-size: 16px;
+      font-size: 15px;
+    }
+
+    .all-day-control {
+      color: var(--muted);
+      cursor: pointer;
+      flex: 0 0 auto;
+      font-size: 12px;
+      font-weight: 500;
+      gap: 8px;
+      min-height: 30px;
+    }
+
+    .time-panel-title {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+      min-width: 0;
     }
 
     .time-icon {
@@ -701,16 +750,44 @@
       width: 26px;
     }
 
-    .all-day-row {
-      color: var(--text);
-      justify-content: space-between;
-      padding-left: 36px;
+    .calendar-toggle {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--accent-strong);
+      cursor: pointer;
+      flex: 0 0 auto;
+      min-height: 34px;
+      padding: 0 12px;
+      font-size: 12px;
     }
+
+    .calendar-toggle::after {
+      content: "↓";
+      display: inline-block;
+      margin-left: 6px;
+      transition: transform .16s ease;
+    }
+
+    .time-panel.calendar-open .calendar-toggle::after {
+      transform: rotate(180deg);
+    }
+
+    .calendar-section {
+      display: none;
+      gap: 8px;
+    }
+
+    .time-panel.calendar-open .calendar-section {
+      display: grid;
+    }
+
+
 
     .switch {
       position: relative;
-      width: 46px;
-      height: 28px;
+      width: 42px;
+      height: 26px;
     }
 
     .switch input {
@@ -730,12 +807,12 @@
       background: var(--text);
       border-radius: 50%;
       content: "";
-      height: 22px;
+      height: 20px;
       left: 3px;
       position: absolute;
       top: 3px;
       transition: transform .18s ease;
-      width: 22px;
+      width: 20px;
     }
 
     .switch input:checked + span {
@@ -743,11 +820,13 @@
     }
 
     .switch input:checked + span::after {
-      transform: translateX(18px);
+      transform: translateX(16px);
     }
 
     .time-summary {
-      justify-content: center;
+      justify-content: stretch;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(78px, auto) auto;
     }
 
     .date-chip,
@@ -757,8 +836,8 @@
       background: var(--accent-soft);
       color: var(--accent-strong);
       cursor: pointer;
-      min-height: 40px;
-      padding: 0 24px;
+      min-height: 34px;
+      padding: 0 14px;
       font-weight: 700;
     }
 
@@ -773,11 +852,11 @@
       background: transparent;
       border: 0;
       color: var(--accent-strong);
-      font-size: 18px;
-      min-height: 40px;
+      font-size: 17px;
+      min-height: 34px;
       outline: none;
       text-align: center;
-      width: 88px;
+      width: 78px;
     }
 
     .time-input::placeholder {
@@ -791,12 +870,12 @@
 
     .calendar-nav {
       justify-content: space-between;
-      padding: 0 4px;
+      padding: 0 2px;
     }
 
     .month-label {
       color: var(--text);
-      font-size: 16px;
+      font-size: 15px;
     }
 
     .calendar-arrow {
@@ -804,9 +883,9 @@
       border: 0;
       color: var(--text);
       cursor: pointer;
-      font-size: 28px;
-      height: 38px;
-      width: 38px;
+      font-size: 24px;
+      height: 32px;
+      width: 32px;
     }
 
     .weekdays,
@@ -818,12 +897,12 @@
 
     .weekdays {
       color: var(--muted);
-      font-size: 12px;
-      padding: 0 4px;
+      font-size: 11px;
+      padding: 0 2px;
     }
 
     .weekdays span {
-      padding: 6px 0;
+      padding: 4px 0;
     }
 
     .weekday-sunday,
@@ -832,7 +911,7 @@
     }
 
     .calendar-grid {
-      row-gap: 4px;
+      row-gap: 2px;
     }
 
     .calendar-day {
@@ -840,10 +919,10 @@
       border: 0;
       color: var(--text);
       cursor: pointer;
-      height: 36px;
+      height: 31px;
       margin: 0 auto;
       padding: 0;
-      width: 36px;
+      width: 31px;
       border-radius: 50%;
     }
 
@@ -859,25 +938,49 @@
 
     .preset-row {
       display: grid;
-      gap: 8px;
+      gap: 6px;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      padding: 4px 0 0;
+      padding: 2px 0 0;
     }
 
     .preset-chip {
       background: transparent;
       color: var(--text);
       font-weight: 400;
-      min-height: 36px;
-      padding: 0 10px;
+      min-height: 32px;
+      padding: 0 8px;
       white-space: nowrap;
+      font-size: 12px;
     }
 
     .actions {
+      position: sticky;
+      bottom: 0;
+      background: color-mix(in srgb, var(--panel) 94%, transparent);
+      border-top: 1px solid var(--line-soft);
+      backdrop-filter: blur(10px);
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-top: 4px;
+      margin-top: 0;
+      padding: 10px 14px max(10px, env(safe-area-inset-bottom));
+    }
+
+    #deleteBtn {
+      margin: 0 14px 12px;
+    }
+
+    @media (max-width: 640px) {
+      #taskDialog {
+        width: calc(100% - 16px);
+        max-height: min(640px, calc(100dvh - 24px));
+        margin: auto auto max(8px, env(safe-area-inset-bottom));
+        border-radius: 14px 14px var(--radius) var(--radius);
+      }
+
+      #taskForm {
+        max-height: inherit;
+      }
     }
 
     .danger {
@@ -963,8 +1066,8 @@
       }
 
       .time-panel {
-        gap: 8px;
-        padding: 10px 0;
+        gap: 7px;
+        padding: 8px 0;
       }
 
       .calendar-day {
@@ -1062,7 +1165,9 @@
 
   <dialog id="taskDialog">
     <form class="modal" id="taskForm" method="dialog">
-      <h2 id="dialogTitle">Новая задача</h2>
+      <div class="modal-head">
+        <h2 id="dialogTitle">Новая задача</h2>
+      </div>
       <label class="field-block text-field">
         <span class="field-label">Описание</span>
         <textarea id="taskText" placeholder="Что нужно сделать?"></textarea>
@@ -1101,36 +1206,41 @@
       </div>
       <div class="time-panel">
         <div class="time-panel-head">
-          <span class="time-icon">◷</span>
-          <span>Время</span>
-        </div>
-        <label class="all-day-row">
-          <span>Весь день</span>
-          <span class="switch">
-            <input id="allDayToggle" type="checkbox">
-            <span></span>
+          <span class="time-panel-title">
+            <span class="time-icon">◷</span>
+            <span>Дата и время</span>
           </span>
-        </label>
+          <label class="all-day-control">
+            <span>Весь день</span>
+            <span class="switch">
+              <input id="allDayToggle" type="checkbox">
+              <span></span>
+            </span>
+          </label>
+        </div>
         <div class="time-summary">
           <button class="date-chip" id="todayBtn" type="button">Сегодня</button>
           <span class="time-separator">|</span>
           <input class="time-input" id="taskTime" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="--:--" aria-label="Время">
+          <button class="calendar-toggle" id="calendarToggleBtn" type="button" aria-expanded="false">Календарь</button>
         </div>
-        <div class="calendar-nav">
-          <button class="calendar-arrow" id="prevMonthBtn" type="button" aria-label="Предыдущий месяц">‹</button>
-          <div class="month-label" id="monthLabel">июнь 2026 г.</div>
-          <button class="calendar-arrow" id="nextMonthBtn" type="button" aria-label="Следующий месяц">›</button>
-        </div>
-        <div class="weekdays" aria-hidden="true">
-          <span>ПН</span><span>ВТ</span><span>СР</span><span>ЧТ</span><span>ПТ</span><span>СБ</span><span class="weekday-sunday">ВС</span>
-        </div>
-        <div class="calendar-grid" id="calendarGrid"></div>
-        <input id="taskDue" type="hidden">
-        <div class="preset-row">
-          <button class="preset-chip" data-date-preset="1" type="button">Завтра</button>
-          <button class="preset-chip" data-date-preset="3" type="button">Через 3 дня</button>
-          <button class="preset-chip" data-date-preset="7" type="button">Через 1 неделю</button>
-          <button class="preset-chip" id="clearDueBtn" type="button">Без срока</button>
+        <div class="calendar-section" id="calendarSection">
+          <div class="calendar-nav">
+            <button class="calendar-arrow" id="prevMonthBtn" type="button" aria-label="Предыдущий месяц">‹</button>
+            <div class="month-label" id="monthLabel">июнь 2026 г.</div>
+            <button class="calendar-arrow" id="nextMonthBtn" type="button" aria-label="Следующий месяц">›</button>
+          </div>
+          <div class="weekdays" aria-hidden="true">
+            <span>ПН</span><span>ВТ</span><span>СР</span><span>ЧТ</span><span>ПТ</span><span>СБ</span><span class="weekday-sunday">ВС</span>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <input id="taskDue" type="hidden">
+          <div class="preset-row">
+            <button class="preset-chip" data-date-preset="1" type="button">Завтра</button>
+            <button class="preset-chip" data-date-preset="3" type="button">Через 3 дня</button>
+            <button class="preset-chip" data-date-preset="7" type="button">Через 1 неделю</button>
+            <button class="preset-chip" id="clearDueBtn" type="button">Без срока</button>
+          </div>
         </div>
       </div>
       <div class="actions">
@@ -1203,6 +1313,8 @@
     const calendarGrid = document.querySelector("#calendarGrid");
     const monthLabel = document.querySelector("#monthLabel");
     const allDayToggle = document.querySelector("#allDayToggle");
+    const timePanel = document.querySelector(".time-panel");
+    const calendarToggleBtn = document.querySelector("#calendarToggleBtn");
     const fields = {
       text: document.querySelector("#taskText"),
       type: document.querySelector("#taskType"),
@@ -1223,6 +1335,11 @@
     let longPressTimer = null;
     let suppressNextTaskClick = false;
     let calendarViewDate = new Date();
+
+    function setCalendarOpen(open) {
+      timePanel.classList.toggle("calendar-open", open);
+      calendarToggleBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
 
     function loadLocal() {
       try {
@@ -2361,6 +2478,7 @@
       fields.time.disabled = allDayToggle.checked;
       calendarViewDate = dateFromIso(fields.due.value) || new Date();
       renderCalendar();
+      setCalendarOpen(mode === "schedule");
       document.querySelector("#deleteBtn").style.display = id && mode === "full" ? "block" : "none";
       dialog.showModal();
       if (mode === "full") {
@@ -2508,6 +2626,9 @@
     allDayToggle.addEventListener("change", () => {
       fields.time.disabled = allDayToggle.checked;
       if (allDayToggle.checked) fields.time.value = "";
+    });
+    calendarToggleBtn.addEventListener("click", () => {
+      setCalendarOpen(!timePanel.classList.contains("calendar-open"));
     });
     document.querySelector("#todayBtn").addEventListener("click", () => setSelectedDate(new Date()));
     document.querySelector("#prevMonthBtn").addEventListener("click", () => {

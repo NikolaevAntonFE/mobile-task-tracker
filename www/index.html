@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
@@ -29,6 +29,7 @@
       --radius: 8px;
       --control-h: 44px;
       --shadow: 0 18px 44px rgba(0, 0, 0, .28);
+      --vvh: 100dvh;
     }
 
     @media (prefers-color-scheme: light) {
@@ -54,7 +55,7 @@
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      min-height: 100vh;
+      min-height: var(--vvh);
       overflow-x: hidden;
     }
 
@@ -65,10 +66,14 @@
     .app {
       width: min(100vw, 760px);
       max-width: 100vw;
-      min-height: 100vh;
+      min-height: var(--vvh);
       margin: 0 auto;
       overflow: hidden;
       padding: max(14px, env(safe-area-inset-top)) clamp(12px, 4vw, 24px) max(18px, env(safe-area-inset-bottom));
+    }
+
+    body.keyboard-open .app {
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
     }
 
     header, .quick, .toolbar, .search, .segments, .stats, .list, .task, .empty {
@@ -322,33 +327,32 @@
 
     .list {
       display: grid;
-      gap: 0;
+      gap: 6px;
       padding-bottom: 96px;
       min-width: 0;
     }
 
     .list-heading {
       color: var(--muted);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       letter-spacing: .02em;
       line-height: 1.2;
-      padding: 8px 2px 2px;
+      padding: 12px 4px 0;
       text-transform: uppercase;
     }
 
     .task {
       position: relative;
       display: grid;
-      grid-template-columns: 30px minmax(0, 1fr) 34px;
+      grid-template-columns: 32px minmax(0, 1fr) 36px;
       gap: 8px;
       align-items: center;
-      border: 0;
-      border-bottom: 1px solid var(--line-soft);
+      border: 1px solid var(--line-soft);
       border-left: 3px solid transparent;
-      border-radius: 0;
-      background: transparent;
-      padding: 10px 2px 10px 8px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .015);
+      padding: 11px 6px 11px 10px;
       box-shadow: none;
       min-width: 0;
       touch-action: manipulation;
@@ -366,12 +370,12 @@
 
     .task.selected {
       background: var(--accent-soft);
-      box-shadow: inset 0 0 0 1px var(--accent-soft);
+      border-color: rgba(122, 162, 247, .4);
     }
 
     .check {
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       border: 2px solid var(--line);
       background: transparent;
@@ -392,11 +396,16 @@
       color: var(--muted);
     }
 
+    .task.done {
+      opacity: .74;
+    }
+
     .title {
       font-size: 15px;
-      line-height: 1.3;
+      font-weight: 600;
+      line-height: 1.28;
       overflow-wrap: anywhere;
-      margin-bottom: 3px;
+      margin-bottom: 6px;
     }
 
     .task-main {
@@ -407,25 +416,31 @@
     .meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 6px;
       align-items: center;
       min-width: 0;
       overflow: hidden;
       color: var(--muted);
-      font-size: 12px;
+      font-size: 11.5px;
       line-height: 1.25;
     }
 
     .meta-separator {
-      color: var(--line);
+      display: none;
     }
 
+    .meta-chip,
+    .meta-tag,
     .pill {
-      border: 1px solid var(--line);
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      border: 1px solid rgba(255, 255, 255, .07);
       border-radius: 999px;
-      padding: 3px 8px;
-      color: var(--muted);
-      font-size: 12px;
+      padding: 0 8px;
+      color: #d6dde9;
+      background: rgba(255, 255, 255, .03);
+      font-size: 11.5px;
       line-height: 1.2;
       max-width: 100%;
       overflow: hidden;
@@ -448,21 +463,52 @@
 
     .meta-link {
       appearance: none;
-      border: 0;
-      background: transparent;
-      color: inherit;
+      border: 1px solid rgba(255, 255, 255, .07);
+      background: rgba(255, 255, 255, .03);
+      color: #d6dde9;
       cursor: pointer;
       font: inherit;
       line-height: inherit;
-      padding: 0;
+      padding: 0 8px;
+      min-height: 22px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .meta-link.overdue { color: var(--red); }
-    .meta-link.today { color: var(--accent); }
+    .meta-link.overdue {
+      color: var(--red);
+      border-color: rgba(255, 123, 114, .28);
+      background: rgba(255, 123, 114, .08);
+    }
+
+    .meta-link.today {
+      color: var(--accent-strong);
+      border-color: rgba(122, 162, 247, .24);
+      background: rgba(122, 162, 247, .1);
+    }
+
+    .meta-link.no-due {
+      color: var(--muted);
+      border-style: dashed;
+      background: transparent;
+    }
+
+    .meta-tag.priority-high {
+      color: #ffb0a6;
+      border-color: rgba(255, 123, 114, .28);
+      background: rgba(255, 123, 114, .08);
+    }
+
+    .meta-tag.priority-low {
+      color: #a7dfae;
+      border-color: rgba(125, 220, 138, .24);
+      background: rgba(125, 220, 138, .08);
+    }
 
     .menu {
       display: grid;
@@ -470,11 +516,11 @@
     }
 
     .mini {
-      width: 30px;
-      height: 30px;
-      border: 0;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(255, 255, 255, .06);
       border-radius: 50%;
-      background: transparent;
+      background: rgba(255, 255, 255, .02);
       color: var(--muted);
       cursor: pointer;
       font-size: 18px;
@@ -496,7 +542,7 @@
 
     dialog {
       width: min(560px, calc(100% - 20px));
-      max-height: min(760px, calc(100dvh - 20px));
+      max-height: min(760px, calc(var(--vvh) - 20px));
       border: 1px solid var(--line);
       border-radius: var(--radius);
       background: var(--panel);
@@ -511,24 +557,47 @@
     }
 
     .action-dialog {
-      width: min(560px, calc(100% - 24px));
-      margin: auto auto max(12px, env(safe-area-inset-bottom));
+      width: min(520px, calc(100% - 18px));
+      margin: auto auto max(10px, env(safe-area-inset-bottom));
       border-radius: 14px 14px var(--radius) var(--radius);
     }
 
-    .action-sheet {
-      display: grid;
+    .action-dialog.manage-dialog {
+      width: min(360px, calc(100% - 28px));
+    }
+
+    .action-dialog.manage-dialog .action-sheet {
       gap: 8px;
       padding: 12px;
     }
 
+    .action-dialog.manage-dialog .action-sheet-title {
+      font-size: 17px;
+      line-height: 1.18;
+    }
+
+    .action-dialog.manage-dialog .action-sheet-meta {
+      font-size: 12px;
+    }
+
+    .action-sheet {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
     .action-sheet-head {
       display: grid;
-      grid-template-columns: 36px minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr);
       gap: 8px;
-      padding: 2px 2px 6px;
+      padding: 2px 2px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
       min-width: 0;
-      align-items: center;
+      align-items: start;
+    }
+
+    .action-sheet-head.has-back {
+      grid-template-columns: 36px minmax(0, 1fr);
     }
 
     .sheet-back {
@@ -559,18 +628,22 @@
     }
 
     .action-sheet-title {
-      font-size: 16px;
+      font-size: 20px;
       font-weight: 700;
-      line-height: 1.25;
+      line-height: 1.12;
       overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
 
     .action-sheet-meta {
       color: var(--muted);
-      font-size: 12px;
-      line-height: 1.2;
+      font-size: 12.5px;
+      line-height: 1.35;
+      margin-top: 4px;
     }
 
     .sheet-actions {
@@ -579,9 +652,67 @@
       grid-template-columns: 1fr 1fr;
     }
 
-    .sheet-actions .ghost,
-    .sheet-actions .primary {
+    .sheet-actions button {
       width: 100%;
+      min-height: 46px;
+      border-radius: 13px;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    .sheet-actions .primary {
+      grid-column: 1 / -1;
+      min-height: 52px;
+      justify-content: center;
+    }
+
+    .sheet-actions .wide {
+      grid-column: 1 / -1;
+    }
+
+    .sheet-actions .ghost {
+      background: rgba(255, 255, 255, .02);
+      border-color: rgba(255, 255, 255, .08);
+      color: #d9e1ee;
+    }
+
+    .sheet-actions .danger {
+      grid-column: 1 / -1;
+      color: #ff8c86;
+      border-color: rgba(255, 123, 114, .35);
+      background: rgba(255, 123, 114, .06);
+      justify-content: center;
+    }
+
+    .sheet-actions .danger:hover {
+      background: rgba(255, 123, 114, .1);
+    }
+
+    .sheet-actions.compact {
+      grid-template-columns: 1fr;
+    }
+
+    .sheet-actions.compact .primary {
+      grid-column: auto;
+      min-height: 46px;
+    }
+
+    .sheet-actions.compact button {
+      justify-content: center;
+      text-align: center;
+    }
+
+    .action-dialog.manage-dialog .sheet-actions.compact button {
+      min-height: 42px;
+    }
+
+    .action-dialog.manage-dialog .sheet-actions .primary {
+      min-height: 46px;
     }
 
     .modal.schedule-only .modal-head,
@@ -846,7 +977,7 @@
       font-weight: 700;
     }
 
-    .time-input {
+    .time-value {
       appearance: none;
       -webkit-appearance: none;
       background: transparent;
@@ -857,13 +988,11 @@
       outline: none;
       text-align: center;
       width: 78px;
+      padding: 0;
     }
 
-    .time-input::placeholder {
-      color: var(--muted);
-    }
-
-    .time-input:disabled {
+    .time-value.empty,
+    .time-value:disabled {
       color: var(--muted);
       opacity: .55;
     }
@@ -970,10 +1099,49 @@
       margin: 0 14px 12px;
     }
 
+    body.keyboard-open dialog {
+      max-height: calc(var(--vvh) - 10px);
+      margin: 6px auto auto;
+    }
+
+    body.keyboard-open #taskDialog {
+      width: calc(100% - 12px);
+      max-height: calc(var(--vvh) - 8px);
+    }
+
+    body.keyboard-open .modal {
+      gap: 6px;
+    }
+
+    body.keyboard-open .modal-head {
+      padding-top: 10px;
+      padding-bottom: 8px;
+    }
+
+    body.keyboard-open .field-block.text-field {
+      padding-top: 8px;
+    }
+
+    body.keyboard-open textarea {
+      min-height: 54px;
+    }
+
+    body.keyboard-open .time-panel {
+      gap: 7px;
+      padding: 8px 0;
+      margin-top: 4px;
+    }
+
+    body.keyboard-open .actions {
+      position: static;
+      padding-top: 8px;
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+
     @media (max-width: 640px) {
       #taskDialog {
         width: calc(100% - 16px);
-        max-height: min(640px, calc(100dvh - 24px));
+        max-height: min(640px, calc(var(--vvh) - 24px));
         margin: auto auto max(8px, env(safe-area-inset-bottom));
         border-radius: 14px 14px var(--radius) var(--radius);
       }
@@ -1017,6 +1185,104 @@
       gap: 8px;
     }
 
+    .time-picker-dialog {
+      width: min(360px, calc(100% - 24px));
+      margin: auto auto max(10px, env(safe-area-inset-bottom));
+    }
+
+    .time-picker {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .time-picker-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .time-picker-head h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .time-picker-meta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .time-wheel-wrap {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 4px 0;
+    }
+
+    .time-wheel-wrap::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 42px;
+      transform: translateY(-50%);
+      border-top: 1px solid rgba(255, 255, 255, .08);
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .02);
+      border-radius: 12px;
+      pointer-events: none;
+    }
+
+    .time-wheel {
+      position: relative;
+      height: 168px;
+      overflow-y: auto;
+      scrollbar-width: none;
+      scroll-snap-type: y mandatory;
+      overscroll-behavior: contain;
+      padding: 63px 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .time-wheel::-webkit-scrollbar {
+      display: none;
+    }
+
+    .time-wheel button {
+      width: 100%;
+      min-height: 42px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 22px;
+      font-weight: 600;
+      scroll-snap-align: center;
+      padding: 0;
+    }
+
+    .time-wheel button.active {
+      color: var(--text);
+    }
+
+    .time-wheel-separator {
+      position: relative;
+      z-index: 1;
+      color: var(--muted);
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .time-picker-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
     .status-text {
       min-height: 18px;
       color: var(--muted);
@@ -1049,6 +1315,33 @@
 
       .choice-grid.priority {
         grid-template-columns: 1fr;
+      }
+
+      .action-sheet {
+        gap: 10px;
+        padding: 12px;
+      }
+
+      .action-sheet-title {
+        font-size: 18px;
+        line-height: 1.15;
+      }
+
+      .action-sheet-meta {
+        font-size: 12px;
+      }
+
+      .sheet-actions {
+        gap: 8px;
+      }
+
+      .sheet-actions button {
+        min-height: 44px;
+        font-size: 13.5px;
+      }
+
+      .sheet-actions .primary {
+        min-height: 48px;
       }
 
       .preset-row {
@@ -1221,7 +1514,8 @@
         <div class="time-summary">
           <button class="date-chip" id="todayBtn" type="button">Сегодня</button>
           <span class="time-separator">|</span>
-          <input class="time-input" id="taskTime" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="--:--" aria-label="Время">
+          <button class="time-value empty" id="timePickerBtn" type="button" aria-label="Время">--:--</button>
+          <input id="taskTime" type="hidden">
           <button class="calendar-toggle" id="calendarToggleBtn" type="button" aria-expanded="false">Календарь</button>
         </div>
         <div class="calendar-section" id="calendarSection">
@@ -1287,6 +1581,26 @@
     </form>
   </dialog>
 
+  <dialog class="time-picker-dialog" id="timePickerDialog">
+    <form class="time-picker" method="dialog">
+      <div class="time-picker-head">
+        <div>
+          <h3>Время</h3>
+          <div class="time-picker-meta">Скролл для выбора</div>
+        </div>
+      </div>
+      <div class="time-wheel-wrap">
+        <div class="time-wheel" id="hourWheel" aria-label="Часы"></div>
+        <div class="time-wheel-separator">:</div>
+        <div class="time-wheel" id="minuteWheel" aria-label="Минуты"></div>
+      </div>
+      <div class="time-picker-actions">
+        <button class="ghost" id="timePickerCancelBtn" type="button">Отмена</button>
+        <button class="primary" id="timePickerApplyBtn" type="button">Выбрать</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
     const storeKey = "anton.mobile.tasks.v1";
     const nativeApp = Boolean(window.Capacitor?.isNativePlatform?.());
@@ -1298,9 +1612,13 @@
     const list = document.querySelector("#taskList");
     const dialog = document.querySelector("#taskDialog");
     const actionDialog = document.querySelector("#actionDialog");
+    const timePickerDialog = document.querySelector("#timePickerDialog");
     const sheetBackBtn = document.querySelector("#sheetBackBtn");
     const sheetActions = document.querySelector("#sheetActions");
     const settingsDialog = document.querySelector("#settingsDialog");
+    const timePickerBtn = document.querySelector("#timePickerBtn");
+    const hourWheel = document.querySelector("#hourWheel");
+    const minuteWheel = document.querySelector("#minuteWheel");
     const form = document.querySelector("#taskForm");
     const quickForm = document.querySelector("#quickForm");
     const quickInput = document.querySelector("#quickInput");
@@ -1330,6 +1648,8 @@
     let actionTaskId = null;
     let actionSheetParentId = null;
     let dialogMode = "full";
+    let timePickerHour = "12";
+    let timePickerMinute = "00";
     const selectedTaskIds = new Set();
     let selectionMode = false;
     let longPressTimer = null;
@@ -1623,6 +1943,19 @@
       return time ? `${label} ${time}` : label;
     }
 
+    function taskActionMeta(task) {
+      const parts = [];
+      const due = dueLabel(task.due, task.time);
+      if (due) parts.push(due);
+      if (task.type) parts.push(typeLabel(task.type));
+      if (task.priority && task.priority !== "medium") parts.push(priorityLabel(task.priority));
+      return parts.join(" • ") || "Быстрые действия";
+    }
+
+    function setActionDialogMode(mode = "quick") {
+      actionDialog.classList.toggle("manage-dialog", mode === "manage");
+    }
+
     function shortDateText(value) {
       const today = localIsoDate();
       if (value === today) return "Сегодня";
@@ -1655,6 +1988,73 @@
       const hours = digits.slice(0, 2);
       const mins = digits.slice(2, 4);
       return mins ? `${hours}:${mins}` : hours;
+    }
+
+    function updateTimeButton() {
+      const value = normalizedTime(fields.time.value);
+      timePickerBtn.textContent = value || "--:--";
+      timePickerBtn.classList.toggle("empty", !value);
+      timePickerBtn.disabled = allDayToggle.checked;
+    }
+
+    function buildTimeWheel(container, total, onSelect) {
+      container.innerHTML = "";
+      for (let i = 0; i < total; i += 1) {
+        const value = String(i).padStart(2, "0");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.value = value;
+        button.textContent = value;
+        button.addEventListener("click", () => onSelect(value, true));
+        container.appendChild(button);
+      }
+    }
+
+    function markTimeWheelActive(container, value) {
+      container.querySelectorAll("button").forEach(button => {
+        button.classList.toggle("active", button.dataset.value === value);
+      });
+    }
+
+    function scrollTimeWheelToValue(container, value, instant = false) {
+      const target = container.querySelector(`button[data-value="${value}"]`);
+      if (!target) return;
+      target.scrollIntoView({ block: "center", behavior: instant ? "auto" : "smooth" });
+      markTimeWheelActive(container, value);
+    }
+
+    function setTimePickerHour(value, instant = false) {
+      timePickerHour = value;
+      scrollTimeWheelToValue(hourWheel, value, instant);
+    }
+
+    function setTimePickerMinute(value, instant = false) {
+      timePickerMinute = value;
+      scrollTimeWheelToValue(minuteWheel, value, instant);
+    }
+
+    function snapTimeWheel(container, fallback, setter) {
+      const itemHeight = 42;
+      const centered = Math.round(container.scrollTop / itemHeight);
+      const maxIndex = container.children.length - 1;
+      const index = Math.min(Math.max(centered, 0), maxIndex);
+      const value = container.children[index]?.dataset.value || fallback;
+      setter(value, false);
+    }
+
+    function openTimePicker() {
+      if (allDayToggle.checked) return;
+      const value = normalizedTime(fields.time.value) || defaultReminderTime();
+      const [hours, minutes] = value.split(":");
+      setTimePickerHour(hours, true);
+      setTimePickerMinute(minutes, true);
+      timePickerDialog.showModal();
+    }
+
+    function applyTimePicker() {
+      fields.time.value = `${timePickerHour}:${timePickerMinute}`;
+      updateTimeButton();
+      timePickerDialog.close();
     }
 
     function defaultReminderTime() {
@@ -1882,6 +2282,7 @@
       fields.repeatIntervalDays.value = "";
       allDayToggle.checked = false;
       fields.time.disabled = false;
+      updateTimeButton();
       renderCalendar();
     }
 
@@ -1893,6 +2294,31 @@
       const active = document.activeElement;
       if (!isEditableElement(active) || isEditableElement(event.target)) return;
       active.blur();
+    }
+
+    function syncViewportState() {
+      const viewport = window.visualViewport;
+      const height = Math.round(viewport?.height || window.innerHeight || 0);
+      if (height > 0) {
+        document.documentElement.style.setProperty("--vvh", `${height}px`);
+      }
+      const keyboardGap = Math.max(0, Math.round(window.innerHeight - (viewport?.height || window.innerHeight)));
+      const keyboardOpen = keyboardGap > 140;
+      document.body.classList.toggle("keyboard-open", keyboardOpen);
+      if (keyboardOpen) {
+        const active = document.activeElement;
+        if (isEditableElement(active)) {
+          window.setTimeout(() => {
+            active?.scrollIntoView?.({ block: "center", behavior: "smooth" });
+          }, 60);
+        }
+      }
+    }
+
+    function bindBackdropDismiss(targetDialog) {
+      targetDialog.addEventListener("click", event => {
+        if (event.target === targetDialog) targetDialog.close();
+      });
     }
 
     function collapseSearchIfEmpty() {
@@ -2087,8 +2513,9 @@
       const currentTask = tasks.find(item => item.id === id);
       if (!currentTask) return;
       sheetActions.innerHTML = "";
-      document.querySelector("#actionTitle").textContent = "Отложить";
-      document.querySelector("#actionMeta").textContent = currentTask.text || "Задача";
+      setActionDialogMode("quick");
+      setActionHeader(currentTask.text || "Задача", "Отложить");
+      sheetActions.classList.add("compact");
       updateSheetBack();
 
       addSheetButton("+10 мин", "ghost", async () => {
@@ -2135,8 +2562,9 @@
       const currentTask = tasks.find(item => item.id === id);
       if (!currentTask) return;
       sheetActions.innerHTML = "";
-      document.querySelector("#actionTitle").textContent = "Действия";
-      document.querySelector("#actionMeta").textContent = currentTask.text || "Задача";
+      setActionDialogMode("quick");
+      setActionHeader(currentTask.text || "Задача", taskActionMeta(currentTask));
+      sheetActions.classList.remove("compact");
       updateSheetBack();
 
       addSheetButton("Отложить", "primary", () => {
@@ -2145,7 +2573,7 @@
           if (selected) openSnoozeSheet(selected.id);
         });
       });
-      addSheetButton("Дата", "ghost", () => {
+      addSheetButton("Срок", "ghost", () => {
         const selected = actionTask();
         closeActionDialogThen(() => {
           if (selected) openDialog(selected.id, "schedule");
@@ -2169,7 +2597,21 @@
           if (selected) openChoiceSheet(selected.id, "type");
         });
       });
-      addSheetButton("Редактировать", "ghost", () => {
+      showActionDialog();
+    }
+
+    function openTaskManageSheet(id) {
+      actionTaskId = id;
+      actionSheetParentId = null;
+      const currentTask = tasks.find(item => item.id === id);
+      if (!currentTask) return;
+      sheetActions.innerHTML = "";
+      setActionDialogMode("manage");
+      setActionHeader(currentTask.text || "Задача", "Управление задачей");
+      sheetActions.classList.add("compact");
+      updateSheetBack();
+
+      addSheetButton("Редактировать", "primary", () => {
         const selected = actionTask();
         closeActionDialogThen(() => {
           if (selected) openDialog(selected.id);
@@ -2189,7 +2631,14 @@
     }
 
     function updateSheetBack() {
-      sheetBackBtn.classList.toggle("active", Boolean(actionSheetParentId));
+      const hasBack = Boolean(actionSheetParentId);
+      sheetBackBtn.classList.toggle("active", hasBack);
+      document.querySelector(".action-sheet-head").classList.toggle("has-back", hasBack);
+    }
+
+    function setActionHeader(title, meta) {
+      document.querySelector("#actionTitle").textContent = title;
+      document.querySelector("#actionMeta").textContent = meta;
     }
 
     function addSheetButton(label, className, handler) {
@@ -2207,11 +2656,12 @@
       const currentTask = tasks.find(item => item.id === id);
       if (!currentTask) return;
       sheetActions.innerHTML = "";
+      setActionDialogMode("quick");
       const isPriority = field === "priority";
-      document.querySelector("#actionTitle").textContent = isPriority ? "Важность" : "Тип";
-      document.querySelector("#actionMeta").textContent = currentTask.text || "Задача";
+      setActionHeader(currentTask.text || "Задача", isPriority ? "Важность" : "Тип");
+      sheetActions.classList.add("compact");
       if (field === "repeat") {
-        document.querySelector("#actionTitle").textContent = "Повтор";
+        setActionHeader(currentTask.text || "Задача", "Повтор");
         if (!currentTask.due) {
           document.querySelector("#actionMeta").textContent = "Сначала выберите дату";
         }
@@ -2376,14 +2826,19 @@
         const el = document.createElement("article");
         el.className = `task priority-${task.priority || "medium"}${task.done ? " done" : ""}${selectionMode ? " selecting" : ""}${selectedTaskIds.has(task.id) ? " selected" : ""}`;
         const dc = dueClass(task);
-        const reminderMeta = task.type === "reminder" ? `<span>напоминание</span>` : "";
-        const dueMeta = task.due
-          ? `<button class="meta-link ${dc}" data-attr="due" type="button">${dueLabel(task.due, task.time)}</button>`
-          : `<button class="meta-link" data-attr="due" type="button">без срока</button>`;
-        const repeatMeta = repeatLabel(task.repeat, task.repeatIntervalDays)
-          ? `<button class="meta-link" data-attr="repeat" type="button">${repeatLabel(task.repeat, task.repeatIntervalDays)}</button>`
+        const typeMeta = task.type && task.type !== "task"
+          ? `<span class="meta-tag type-tag">${typeLabel(task.type)}</span>`
           : "";
-        const meta = [dueMeta, repeatMeta, reminderMeta].filter(Boolean).join(`<span class="meta-separator">·</span>`);
+        const priorityMeta = task.priority && task.priority !== "medium"
+          ? `<span class="meta-tag priority-${task.priority}">${priorityLabel(task.priority)}</span>`
+          : "";
+        const dueMeta = task.due
+          ? `<button class="meta-link meta-chip ${dc}" data-attr="due" type="button">${dueLabel(task.due, task.time)}</button>`
+          : `<button class="meta-link meta-chip no-due" data-attr="due" type="button">без срока</button>`;
+        const repeatMeta = repeatLabel(task.repeat, task.repeatIntervalDays)
+          ? `<button class="meta-link meta-chip" data-attr="repeat" type="button">${repeatLabel(task.repeat, task.repeatIntervalDays)}</button>`
+          : "";
+        const meta = [dueMeta, repeatMeta, typeMeta, priorityMeta].filter(Boolean).join(`<span class="meta-separator">·</span>`);
         el.innerHTML = `
           <button class="check" aria-label="Готово">${task.done ? "✓" : ""}</button>
           <div class="task-main">
@@ -2453,7 +2908,7 @@
             render();
             return;
           }
-          openTaskActionsSheet(task.id);
+          openTaskManageSheet(task.id);
         });
         list.appendChild(el);
       }
@@ -2476,6 +2931,7 @@
       fields.time.value = task.time || (id ? "" : defaultReminderTime());
       allDayToggle.checked = id ? !fields.time.value : false;
       fields.time.disabled = allDayToggle.checked;
+      updateTimeButton();
       calendarViewDate = dateFromIso(fields.due.value) || new Date();
       renderCalendar();
       setCalendarOpen(mode === "schedule");
@@ -2576,9 +3032,6 @@
       render();
     });
 
-    actionDialog.addEventListener("click", event => {
-      if (event.target === actionDialog) actionDialog.close();
-    });
     actionDialog.addEventListener("close", () => {
       actionTaskId = null;
       actionSheetParentId = null;
@@ -2620,13 +3073,14 @@
     fields.due.addEventListener("input", () => {
       fields.due.value = formatDateInput(fields.due.value);
     });
-    fields.time.addEventListener("input", () => {
-      fields.time.value = formatTimeInput(fields.time.value);
-    });
     allDayToggle.addEventListener("change", () => {
       fields.time.disabled = allDayToggle.checked;
       if (allDayToggle.checked) fields.time.value = "";
+      updateTimeButton();
     });
+    timePickerBtn.addEventListener("click", openTimePicker);
+    document.querySelector("#timePickerCancelBtn").addEventListener("click", () => timePickerDialog.close());
+    document.querySelector("#timePickerApplyBtn").addEventListener("click", applyTimePicker);
     calendarToggleBtn.addEventListener("click", () => {
       setCalendarOpen(!timePanel.classList.contains("calendar-open"));
     });
@@ -2673,6 +3127,26 @@
       event.target.value = "";
     });
 
+    buildTimeWheel(hourWheel, 24, setTimePickerHour);
+    buildTimeWheel(minuteWheel, 60, setTimePickerMinute);
+    hourWheel.addEventListener("scroll", () => {
+      window.clearTimeout(hourWheel._snapTimer);
+      hourWheel._snapTimer = window.setTimeout(() => snapTimeWheel(hourWheel, timePickerHour, setTimePickerHour), 90);
+    });
+    minuteWheel.addEventListener("scroll", () => {
+      window.clearTimeout(minuteWheel._snapTimer);
+      minuteWheel._snapTimer = window.setTimeout(() => snapTimeWheel(minuteWheel, timePickerMinute, setTimePickerMinute), 90);
+    });
+    bindBackdropDismiss(dialog);
+    bindBackdropDismiss(actionDialog);
+    bindBackdropDismiss(settingsDialog);
+    bindBackdropDismiss(timePickerDialog);
+    syncViewportState();
+    updateTimeButton();
+    window.visualViewport?.addEventListener("resize", syncViewportState);
+    window.visualViewport?.addEventListener("scroll", syncViewportState);
+    window.addEventListener("resize", syncViewportState);
+
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").catch(() => {});
     }
@@ -2681,3 +3155,4 @@
   </script>
 </body>
 </html>
+

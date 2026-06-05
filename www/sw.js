@@ -1,4 +1,4 @@
-﻿const cacheName = "mobile-task-tracker-v61";
+const cacheName = "mobile-task-tracker-v67";
 const assets = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./capacitor.js"];
 
 self.addEventListener("install", event => {
@@ -19,3 +19,4 @@ self.addEventListener("fetch", event => {
     caches.match(event.request).then(match => match || fetch(event.request))
   );
 });
+

@@ -1,15 +1,15 @@
 ﻿# Mobile Task Tracker Handoff
 
-Current web/cache version: v61
-Last APK version: v58
-Last commit: 4c71ccd Show editable no due pill
+Current web/cache version: v67
+Last APK version: v65
+Last commit before current checkpoint: 87a14c5 Update handoff for v61 delivery
 Repository: https://github.com/NikolaevAntonFE/mobile-task-tracker
 
 ## Runtime
 
 - Project path: `C:\Users\User\Documents\Codex\2026-06-04\mobile-task-tracker-handoff-c-users`
 - Server: `python server.py`
-- Local URL: `http://127.0.0.1:8787/?v=61`
+- Local URL: `http://127.0.0.1:8787/?v=67`
 - Android API base in app: `http://192.168.100.25:8787`
 - Telegram mode must stay send-only. Do not add polling/getUpdates/webhooks/reactions.
 - Secrets are in local `.env`; do not print or commit it.
@@ -20,36 +20,41 @@ Repository: https://github.com/NikolaevAntonFE/mobile-task-tracker
 - Local Android notifications work.
 - Telegram reminder sending works.
 - GitHub remote is configured and pushed.
-- APK v61 was built locally: `android/app/build/outputs/apk/debug/app-debug.apk`.
+- APK v65 was built locally: `android/app/build/outputs/apk/debug/app-debug.apk`.
 - Current UI tabs: `Сегодня`, `Бессрочные`, `Будущие`, `Закрытые`.
-- Web/cache v58 includes recurring tasks:
+- Recurring tasks are implemented:
   - none, daily, weekdays, weekly, monthly;
   - custom interval (`N дней`, stored as `repeat: "interval"` and `repeatIntervalDays`);
   - recurring completion reschedules `due`, recalculates `dueAtUtc`, clears `notifiedAt`, and keeps the task open.
-- Task cards support inline editing:
-  - priority pill opens priority choice;
-  - type pill opens type choice;
-  - date or `без срока` pill opens date/time editor;
-  - card tap opens full edit;
-  - `...` opens full edit.
-- Choice sheets close by tapping outside the sheet.
+- Task cards support split actions:
+  - card tap opens quick attribute actions (`Отложить`, `Срок`, `Повтор`, `Важность`, `Тип`);
+  - `...` opens compact manage actions (`Редактировать`, `Удалить`);
+  - date chip opens schedule-only edit;
+  - repeat chip opens repeat choice.
+- Choice sheets and dialogs close by tapping outside the sheet/backdrop.
 - Search auto-collapses when empty and blurred.
 - `Сегодня` groups tasks by `Просрочено`, `Утро`, `День`, `Вечер`, `Без времени`.
-- Web/cache v59 compacted the full task/reminder creation dialog:
-  - type, priority, and repeat controls are horizontal chips;
-  - description and calendar are shorter;
-  - dialog uses a mobile bottom-sheet cap with sticky header/actions;
-  - duplicate dialog/page scroll was removed.
-- Web/cache v60 made the calendar inside the full create/edit dialog collapsible:
-  - ordinary full create/edit starts with the calendar collapsed;
-  - `Дата и время` keeps the date chip and time visible;
-  - the calendar opens via the `Календарь` chip;
-  - schedule-only date editing opens with the calendar expanded.
-- Web/cache v61 compacted the `Дата и время` block:
-  - `Весь день` moved into the time panel header;
-  - date, time, and calendar toggle now share one compact action row;
-  - full create modal collapsed height verified at ~524px with no horizontal overflow;
-  - schedule-only date editing still opens expanded and verified with no overflow.
+- Full create/edit dialog is compact mobile-first:
+  - type, priority, and repeat use horizontal chips;
+  - calendar is collapsible inside the `Дата и время` block;
+  - `Весь день` lives in the block header;
+  - date, time, and calendar toggle share one compact action row.
+- Action sheets were refactored:
+  - task title and task meta are shown in the header;
+  - quick sheet and manage sheet have different layouts and visual weight;
+  - manage sheet is intentionally narrower and more utility-like.
+- Task list was polished:
+  - rows are card-like instead of bare separators;
+  - meta is rendered as chips/badges for date, repeat, type, and high/low priority;
+  - completed rows are visually de-emphasized.
+- Keyboard/mobile behavior was improved in v66:
+  - dialogs react to `visualViewport`;
+  - form layout compresses when the keyboard is visible;
+  - backdrop tap dismiss works for dialogs/sheets/settings.
+- Time selection was changed in v67:
+  - manual text input was replaced with a wheel-style scroll picker for hours and minutes;
+  - selected time is still stored in `taskTime`;
+  - time picker also dismisses on backdrop tap.
 - APK v61 was sent to the personal Telegram chat via OpenClaw.
 
 ## Main Files
@@ -62,8 +67,9 @@ Repository: https://github.com/NikolaevAntonFE/mobile-task-tracker
 
 ## Next Product Step
 
-- Install/test the fresh `v61` APK on phone.
-- If recurring UI/reschedule behavior is accepted, commit and optionally send the APK through Telegram.
+- Build and send a fresh `v67` APK to Telegram for on-device testing.
+- Test wheel time picker and keyboard behavior on a real phone.
+- After phone feedback, continue only with targeted UX tweaks rather than another broad UI pass.
 
 ## Low-Token Workflow
 

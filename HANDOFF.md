@@ -20,7 +20,7 @@ Repository: https://github.com/NikolaevAntonFE/mobile-task-tracker
 - Local Android notifications work.
 - Telegram reminder sending works.
 - GitHub remote is configured and pushed.
-- APK v58 was built locally: `task-tracker-debug-v58.apk`.
+- APK v61 was built locally: `android/app/build/outputs/apk/debug/app-debug.apk`.
 - Current UI tabs: `Сегодня`, `Бессрочные`, `Будущие`, `Закрытые`.
 - Web/cache v58 includes recurring tasks:
   - none, daily, weekdays, weekly, monthly;
@@ -50,6 +50,7 @@ Repository: https://github.com/NikolaevAntonFE/mobile-task-tracker
   - date, time, and calendar toggle now share one compact action row;
   - full create modal collapsed height verified at ~524px with no horizontal overflow;
   - schedule-only date editing still opens expanded and verified with no overflow.
+- APK v61 was sent to the personal Telegram chat via OpenClaw.
 
 ## Main Files
 
